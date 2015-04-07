@@ -1,0 +1,874 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        
+        <!--Job Description form view -->
+        <record id="view_job_desc_form" model="ir.ui.view">
+            <field name="name">pr.hr.job.desc.form</field>
+            <field name="model">hr.job.desc</field>
+            <field name="arch" type="xml">
+                <form string="Job Descrption">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Job Description Tree view -->
+        <record id="view_job_desc_tree" model="ir.ui.view">
+            <field name="name">pr.hr.job.desc.tree</field>
+            <field name="model">hr.job.desc</field>
+            <field name="arch" type="xml">
+                <tree string="Job Descrption">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_job_desc_action" model="ir.actions.act_window">
+            <field name="name">Job Description</field>
+            <field name="res_model">hr.job.desc</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Job Description.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_job_desc_action" id="menu_job_desc_id" sequence="4" parent="hr.menu_hr_configuration_employees"/>
+        
+       
+       
+        <!--Job Code form view -->
+        <record id="view_job_code_form" model="ir.ui.view">
+            <field name="name">pr.hr.job.code.form</field>
+            <field name="model">hr.job.code</field>
+            <field name="arch" type="xml">
+                <form string="Job Code">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Job Code Tree view -->
+        <record id="view_job_code_tree" model="ir.ui.view">
+            <field name="name">pr.hr.job.code.tree</field>
+            <field name="model">hr.job.code</field>
+            <field name="arch" type="xml">
+                <tree string="Job Code">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_job_code_action" model="ir.actions.act_window">
+            <field name="name">Job Code</field>
+            <field name="res_model">hr.job.code</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Job Code.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_job_code_action" id="menu_job_code_id" sequence="5" parent="hr.menu_hr_configuration_employees"/>
+       
+        
+        
+        
+        <!--Employee Type form view -->
+        <record id="view_employee_type_form" model="ir.ui.view">
+            <field name="name">pr.hr.employee.type.form</field>
+            <field name="model">hr.employee.type</field>
+            <field name="arch" type="xml">
+                <form string="Employee Type">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Employee Type Tree view -->
+        <record id="view_employee_type_tree" model="ir.ui.view">
+            <field name="name">pr.hr.employee.type.tree</field>
+            <field name="model">hr.employee.type</field>
+            <field name="arch" type="xml">
+                <tree string="Employee Type">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_employee_type_action" model="ir.actions.act_window">
+            <field name="name">Employee Type</field>
+            <field name="res_model">hr.employee.type</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Employee Type.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_employee_type_action" id="menu_employee_type_id" sequence="6" parent="hr.menu_hr_configuration_employees"/>
+        
+        
+        <!--Salutation form view -->
+        <record id="view_salutation_form" model="ir.ui.view">
+            <field name="name">pr.salutation.type.form</field>
+            <field name="model">hr.salutation</field>
+            <field name="arch" type="xml">
+                <form string="Saluatation">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Salutation Tree view -->
+        <record id="view_salutation_tree" model="ir.ui.view">
+            <field name="name">pr.hr.salutation.tree</field>
+            <field name="model">hr.salutation</field>
+            <field name="arch" type="xml">
+                <tree string="Salutation">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_salutation_action" model="ir.actions.act_window">
+            <field name="name">Salutation</field>
+            <field name="res_model">hr.salutation</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Salutation.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_salutation_action" id="menu_salutation_id" sequence="7" parent="hr.menu_hr_configuration_employees"/>
+        
+        
+        <!--Ethnic Origin form view -->
+        <record id="view_ethnic_origin_form" model="ir.ui.view">
+            <field name="name">pr.hr.ethnic.origin.form</field>
+            <field name="model">hr.ethnic.origin</field>
+            <field name="arch" type="xml">
+                <form string="Ethnic Origin">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Ethnic Origin Tree view -->
+        <record id="view_ethnic_origin_tree" model="ir.ui.view">
+            <field name="name">pr.hr.ethnic.origin.tree</field>
+            <field name="model">hr.ethnic.origin</field>
+            <field name="arch" type="xml">
+                <tree string="Ethnic Origin">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_ethnic_origin_action" model="ir.actions.act_window">
+            <field name="name">Ethnic Origin</field>
+            <field name="res_model">hr.ethnic.origin</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Ethnic Origin.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_ethnic_origin_action" id="menu_ethnic_origin_id" sequence="8" parent="hr.menu_hr_configuration_employees"/>
+        
+        
+        
+        <!--Pay Group form view -->
+        <record id="view_pay_group_form" model="ir.ui.view">
+            <field name="name">pr.hr.pay.group.form</field>
+            <field name="model">hr.pay.group</field>
+            <field name="arch" type="xml">
+                <form string="Pay Group">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Ethnic Origin Tree view -->
+        <record id="view_pay_group_tree" model="ir.ui.view">
+            <field name="name">pr.hr.pay.group.tree</field>
+            <field name="model">hr.pay.group</field>
+            <field name="arch" type="xml">
+                <tree string="Pay Group">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_pay_group_action" model="ir.actions.act_window">
+            <field name="name">Pay Group</field>
+            <field name="res_model">hr.pay.group</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Pay Group.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_pay_group_action" id="menu_pay_group_id" sequence="9" parent="hr.menu_hr_configuration_employees"/>
+        
+<!--        ****************************************************************************************************
+                                HR Class Details
+            *****************************************************************************************************  -->
+        
+        <!--Class1 form view -->
+        <record id="view_class1_form" model="ir.ui.view">
+            <field name="name">pr.class1.form.view</field>
+            <field name="model">hr.class1</field>
+            <field name="arch" type="xml">
+                <form string="Class1">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class1_tree" model="ir.ui.view">
+            <field name="name">pr.class1.tree.view</field>
+            <field name="model">hr.class1</field>
+            <field name="arch" type="xml">
+                <tree string="Class1">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class1_action" model="ir.actions.act_window">
+            <field name="name">Class1</field>
+            <field name="res_model">hr.class1</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem id="main_class_menu_id" sequence="10" parent="hr.menu_hr_configuration_employees" name="Class"/>
+        <menuitem action="view_class1_action" id="class1_menu_id" sequence="1" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class2 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class2 form view -->
+        <record id="view_class2_form" model="ir.ui.view">
+            <field name="name">pr.class2.form.view</field>
+            <field name="model">hr.class2</field>
+            <field name="arch" type="xml">
+                <form string="Class2">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class2_tree" model="ir.ui.view">
+            <field name="name">pr.class2.tree.view</field>
+            <field name="model">hr.class2</field>
+            <field name="arch" type="xml">
+                <tree string="Class2">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class2_action" model="ir.actions.act_window">
+            <field name="name">Class2</field>
+            <field name="res_model">hr.class2</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class2_action" id="class2_menu_id" sequence="2" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class3 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class3 form view -->
+        <record id="view_class3_form" model="ir.ui.view">
+            <field name="name">pr.class3.form.view</field>
+            <field name="model">hr.class3</field>
+            <field name="arch" type="xml">
+                <form string="Class3">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class3_tree" model="ir.ui.view">
+            <field name="name">pr.class3.tree.view</field>
+            <field name="model">hr.class3</field>
+            <field name="arch" type="xml">
+                <tree string="Class3">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class3_action" model="ir.actions.act_window">
+            <field name="name">Class3</field>
+            <field name="res_model">hr.class3</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class3_action" id="class3_menu_id" sequence="3" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class4 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class4 form view -->
+        <record id="view_class4_form" model="ir.ui.view">
+            <field name="name">pr.class4.form.view</field>
+            <field name="model">hr.class4</field>
+            <field name="arch" type="xml">
+                <form string="Class4">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class4_tree" model="ir.ui.view">
+            <field name="name">pr.class4.tree.view</field>
+            <field name="model">hr.class4</field>
+            <field name="arch" type="xml">
+                <tree string="Class4">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class4_action" model="ir.actions.act_window">
+            <field name="name">Class4</field>
+            <field name="res_model">hr.class4</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class4_action" id="class4_menu_id" sequence="4" parent="main_class_menu_id"/>
+        
+        
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class5 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class5 form view -->
+        <record id="view_class5_form" model="ir.ui.view">
+            <field name="name">pr.class5.form.view</field>
+            <field name="model">hr.class5</field>
+            <field name="arch" type="xml">
+                <form string="Class5">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class5_tree" model="ir.ui.view">
+            <field name="name">pr.class5.tree.view</field>
+            <field name="model">hr.class5</field>
+            <field name="arch" type="xml">
+                <tree string="Class5">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class5_action" model="ir.actions.act_window">
+            <field name="name">Class5</field>
+            <field name="res_model">hr.class5</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class5_action" id="class5_menu_id" sequence="5" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class6 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class6 form view -->
+        <record id="view_class6_form" model="ir.ui.view">
+            <field name="name">pr.class6.form.view</field>
+            <field name="model">hr.class6</field>
+            <field name="arch" type="xml">
+                <form string="Class6">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class6_tree" model="ir.ui.view">
+            <field name="name">pr.class6.tree.view</field>
+            <field name="model">hr.class6</field>
+            <field name="arch" type="xml">
+                <tree string="Class6">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class6_action" model="ir.actions.act_window">
+            <field name="name">Class6</field>
+            <field name="res_model">hr.class6</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class6_action" id="class6_menu_id" sequence="6" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class7 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class7 form view -->
+        <record id="view_class7_form" model="ir.ui.view">
+            <field name="name">pr.class7.form.view</field>
+            <field name="model">hr.class7</field>
+            <field name="arch" type="xml">
+                <form string="Class7">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class7_tree" model="ir.ui.view">
+            <field name="name">pr.class7.tree.view</field>
+            <field name="model">hr.class7</field>
+            <field name="arch" type="xml">
+                <tree string="Class7">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class7_action" model="ir.actions.act_window">
+            <field name="name">Class7</field>
+            <field name="res_model">hr.class7</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class7_action" id="class7_menu_id" sequence="7" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class8 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class8 form view -->
+        <record id="view_class8_form" model="ir.ui.view">
+            <field name="name">pr.class8.form.view</field>
+            <field name="model">hr.class8</field>
+            <field name="arch" type="xml">
+                <form string="Class8">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class8_tree" model="ir.ui.view">
+            <field name="name">pr.class8.tree.view</field>
+            <field name="model">hr.class8</field>
+            <field name="arch" type="xml">
+                <tree string="Class8">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class8_action" model="ir.actions.act_window">
+            <field name="name">Class8</field>
+            <field name="res_model">hr.class8</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class8_action" id="class8_menu_id" sequence="8" parent="main_class_menu_id"/>
+        
+        <!--        ****************************************************************************************************
+                                HR Class9 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class9 form view -->
+        <record id="view_class9_form" model="ir.ui.view">
+            <field name="name">pr.class9.form.view</field>
+            <field name="model">hr.class9</field>
+            <field name="arch" type="xml">
+                <form string="Class9">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class9_tree" model="ir.ui.view">
+            <field name="name">pr.class9.tree.view</field>
+            <field name="model">hr.class9</field>
+            <field name="arch" type="xml">
+                <tree string="Class9">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class9_action" model="ir.actions.act_window">
+            <field name="name">Class9</field>
+            <field name="res_model">hr.class9</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class9_action" id="class9_menu_id" sequence="9" parent="main_class_menu_id"/>
+        
+        <!--        ****************************************************************************************************
+                                HR Class10 Details
+            *****************************************************************************************************  -->
+        
+        <!--Class10 form view -->
+        <record id="view_class10_form" model="ir.ui.view">
+            <field name="name">pr.class10.form.view</field>
+            <field name="model">hr.class10</field>
+            <field name="arch" type="xml">
+                <form string="Class10">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name"/>
+                            <field name="class_id" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class10_tree" model="ir.ui.view">
+            <field name="name">pr.class10.tree.view</field>
+            <field name="model">hr.class10</field>
+            <field name="arch" type="xml">
+                <tree string="Class10">
+                    <field name="name"/>
+                    <field name="class_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class10_action" model="ir.actions.act_window">
+            <field name="name">Class10</field>
+            <field name="res_model">hr.class10</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class10_action" id="class10_menu_id" sequence="10" parent="main_class_menu_id"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Class Mapping Details
+            *****************************************************************************************************  -->
+        
+        <!--Class Mapping form view -->
+        <record id="view_class_mapping_form" model="ir.ui.view">
+            <field name="name">pr.class.mapping.form.view</field>
+            <field name="model">hr.class.mapping</field>
+            <field name="arch" type="xml">
+                <form string="Mapping">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="name" required="1"/>
+                            <field name="label" required="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_class_mapping_tree" model="ir.ui.view">
+            <field name="name">pr.class_mapping.tree.view</field>
+            <field name="model">hr.class.mapping</field>
+            <field name="arch" type="xml">
+                <tree string="Mapping">
+                    <field name="name"/>
+                    <field name="label"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_class_mapping_action" model="ir.actions.act_window">
+            <field name="name">Mapping</field>
+            <field name="res_model">hr.class.mapping</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Class Mapping.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_class_mapping_action" id="class_mapping_menu_id" sequence="11" parent="main_class_menu_id"/>
+       
+       
+    <!--        ****************************************************************************************************
+                            HR Class Details
+        *****************************************************************************************************  -->
+       
+        <!--Shift form view -->
+        <record id="view_shidt_form" model="ir.ui.view">
+            <field name="name">pr.hr.shift.form</field>
+            <field name="model">hr.shift</field>
+            <field name="arch" type="xml">
+                <form string="Shifts">
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Shift Tree view -->
+        <record id="view_shift_tree" model="ir.ui.view">
+            <field name="name">pr.hr.shift.tree</field>
+            <field name="model">hr.shift</field>
+            <field name="arch" type="xml">
+                <tree string="shifts">
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <record id="view_shift_action" model="ir.actions.act_window">
+            <field name="name">Shifts</field>
+            <field name="res_model">hr.shift</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Shift.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_shift_action" id="menu_shift_id" sequence="11" parent="hr.menu_hr_configuration_employees"/>
+        
+
+        
+        
+        
+    </data>
+</openerp>
