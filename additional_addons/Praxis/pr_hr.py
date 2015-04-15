@@ -36,6 +36,26 @@ _logger = logging.getLogger(__name__)
 class hr_employee(osv.osv):
     _inherit = "hr.employee"
     
+    def name_get(self, cr, uid, ids, context=None):
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['name','last_name'], context=context)
+        res = []
+        for record in reads:
+            name = record['name']
+            if record['last_name']:
+                name = record['last_name']+' '+name
+            res.append((record['id'], name))
+        return res
+    
+    def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        ids = []
+        if name:
+            ids = self.search(cr, uid, [('name','ilike',name)]+ args, limit=limit, context=context)
+        if not ids:
+            ids = self.search(cr, uid, [('last_name','ilike',name)]+ args, limit=limit, context=context)
+        result = self.name_get(cr, uid, ids, context=context)
+        return result
     
     
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
@@ -45,9 +65,8 @@ class hr_employee(osv.osv):
         mapping_obj = self.pool.get('hr.class.mapping')
         if not context: context = {}
         res = super(hr_employee, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
-        doc = etree.XML(res['arch'])
-        nodes = doc.xpath("//field[@name='class_id1']")
         if view_type == 'form' :
+            doc = etree.XML(res['arch'])
             for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
                 nodes = doc.xpath("//field[@name='"+m.name[0:5]+'_id'+m.name[5:]+"']")
                 for node in nodes:
@@ -55,9 +74,16 @@ class hr_employee(osv.osv):
                     node.set('invisible', '0')
                     node.set('string', m.label)
                     setup_modifiers(node, res['fields'][m.name[0:5]+'_id'+m.name[5:]])
-                    
+                     
             res['arch'] = etree.tostring(doc)
         return res
+    
+    def _display_name_compute(self, cr, uid, ids, name, args, context=None):
+        return dict(self.name_get(cr, uid, ids, context=context))
+
+    # indirections to avoid passing a copy of the overridable method when declaring the function field
+    _display_name = lambda self, *args, **kwargs: self._display_name_compute(*args, **kwargs)
+    
     
     
     _columns = {
@@ -102,16 +128,50 @@ class hr_employee(osv.osv):
                 'pay_date'         : fields.date('Pay Effective Date'),
                 'pay_frequency'    : fields.selection([('bi_weekly','Bi-Weekly'),('custom','Custom'),('monthly','Monthly'),
                                                        ('semi_monthly','Semi-Monthly'),('weekly','Weekly')], 'Pay Frequency'),
-                'no_of_hours'      : fields.float('Hours/Units'),
+                'days_payable'      : fields.float('Days Payable'),
                 'unit_pay_rate'    : fields.float('Unit Pay Rate'),
                 'pay_period_sal'   : fields.float('Pay Period Salary'),
                 'monthly_pay'      : fields.float('Monthly Pay'),
                 'annual_pay'       : fields.float('Annual Pay'),
-                'pay_group_id'     : fields.many2one('hr.pay.group','Pay Group')
+                'pay_group_id'     : fields.many2one('hr.pay.group','Pay Group'),
+                
+                'last_name'        : fields.char('Last Name', size = 32),
+                'street'           : fields.char('Street'),
+                'street2'          : fields.char('Street2'),
+                'zip'              : fields.char('Zip', size=24, change_default=True),
+                'city'             : fields.char('City'),
+                'state_id'         : fields.many2one("res.country.state", 'State', ondelete='restrict'),
+                'country_id'       : fields.many2one('res.country', 'Country', ondelete='restrict'),
+                'email'            : fields.char('Email'),
+                'phone'            : fields.char('Phone'),
+                'mobile'           : fields.char('Mobile'),
+                'display_name'     : fields.function(_display_name, type='char', string='Name', select=True),
                   
-                
-                
                 }
+    
+    def onchange_payinfo(self, cr, uid, ids, f_get , unit_pay_rate, days_payable, monthly_pay, annual_pay):
+        res = {}
+       
+        if f_get in ('days','rate'):
+            res['monthly_pay'] = days_payable * (unit_pay_rate * 8)
+            res['annual_pay'] = res['monthly_pay'] * 12
+            
+        if f_get == 'monthly':
+            res['unit_pay_rate'] = (monthly_pay / (days_payable * 8)) if days_payable else 0
+            res['annual_pay'] = 12 * monthly_pay
+            
+        
+        if f_get == 'annual':
+            res['monthly_pay'] = annual_pay / 12
+            
+        return {'value':res }
+            
+    
+    def onchange_state(self, cr, uid, ids, state_id):
+        if state_id:
+            state = self.pool.get('res.country.state').browse(cr, uid, state_id)
+            return {'value': {'country_id': state.country_id.id}}
+        return {}
     
     #to get age from date of birth
     def get_age(self, cr, birthday):
@@ -121,6 +181,7 @@ class hr_employee(osv.osv):
 
     def onchange_birthdate(self, cr, uid, ids, birthday, context=None):
         res = {}
+        print "birthday",  birthday
         if birthday:
             res['age'] = self.get_age(cr, birthday)
         return {'value':res}

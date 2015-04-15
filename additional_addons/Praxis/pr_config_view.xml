@@ -11,6 +11,7 @@
                 <form string="Job Descrption">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -24,8 +25,21 @@
             <field name="model">hr.job.desc</field>
             <field name="arch" type="xml">
                 <tree string="Job Descrption">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Job Description Search view -->
+        <record id="view_job_desc_search" model="ir.ui.view">
+            <field name="name">pr.hr.job.desc.search</field>
+            <field name="model">hr.job.desc</field>
+            <field name="arch" type="xml">
+                <search string="Job Descrption">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -56,6 +70,7 @@
                 <form string="Job Code">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -69,8 +84,21 @@
             <field name="model">hr.job.code</field>
             <field name="arch" type="xml">
                 <tree string="Job Code">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Job Code Search view -->
+        <record id="view_job_code_search" model="ir.ui.view">
+            <field name="name">pr.hr.job.code.search</field>
+            <field name="model">hr.job.code</field>
+            <field name="arch" type="xml">
+                <search string="Job Descrption">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -102,6 +130,7 @@
                 <form string="Employee Type">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -115,8 +144,21 @@
             <field name="model">hr.employee.type</field>
             <field name="arch" type="xml">
                 <tree string="Employee Type">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Employee Type Search view -->
+        <record id="view_employee_type_search" model="ir.ui.view">
+            <field name="name">pr.hr.employee.type.search</field>
+            <field name="model">hr.employee.type</field>
+            <field name="arch" type="xml">
+                <search string="Job Descrption">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -146,6 +188,7 @@
                 <form string="Saluatation">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -159,8 +202,21 @@
             <field name="model">hr.salutation</field>
             <field name="arch" type="xml">
                 <tree string="Salutation">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Salutation Search view -->
+        <record id="view_salutation_search" model="ir.ui.view">
+            <field name="name">pr.hr.salutation.search</field>
+            <field name="model">hr.salutation</field>
+            <field name="arch" type="xml">
+                <search string="Salutation">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -190,6 +246,7 @@
                 <form string="Ethnic Origin">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -203,8 +260,21 @@
             <field name="model">hr.ethnic.origin</field>
             <field name="arch" type="xml">
                 <tree string="Ethnic Origin">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!-- Ethnic Origin Tree Search -->
+        <record id="view_ethnic_origin_search" model="ir.ui.view">
+            <field name="name">pr.hr.ethnic.origin.search</field>
+            <field name="model">hr.ethnic.origin</field>
+            <field name="arch" type="xml">
+                <search string="Ethnic Origin">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -235,6 +305,7 @@
                 <form string="Pay Group">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -248,8 +319,21 @@
             <field name="model">hr.pay.group</field>
             <field name="arch" type="xml">
                 <tree string="Pay Group">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Ethnic Origin Search view -->
+        <record id="view_pay_group_search" model="ir.ui.view">
+            <field name="name">pr.hr.pay.group.search</field>
+            <field name="model">hr.pay.group</field>
+            <field name="arch" type="xml">
+                <search string="Pay Group">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -282,6 +366,7 @@
                 <form string="Class1">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -295,8 +380,20 @@
             <field name="model">hr.class1</field>
             <field name="arch" type="xml">
                 <tree string="Class1">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class1_search" model="ir.ui.view">
+            <field name="name">pr.class1.search</field>
+            <field name="model">hr.class1</field>
+            <field name="arch" type="xml">
+                <search string="Class1">
+                    <field name="code"/>
+                    <field name="name" required="1"/>
+                </search>
             </field>
         </record>
         
@@ -331,8 +428,9 @@
                 <form string="Class2">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -345,9 +443,21 @@
             <field name="model">hr.class2</field>
             <field name="arch" type="xml">
                 <tree string="Class2">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class2_search" model="ir.ui.view">
+            <field name="name">pr.class2.search</field>
+            <field name="model">hr.class2</field>
+            <field name="arch" type="xml">
+                <search string="Class2">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -381,8 +491,9 @@
                 <form string="Class3">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -395,9 +506,21 @@
             <field name="model">hr.class3</field>
             <field name="arch" type="xml">
                 <tree string="Class3">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class3_search" model="ir.ui.view">
+            <field name="name">pr.class3.search</field>
+            <field name="model">hr.class3</field>
+            <field name="arch" type="xml">
+                <search string="Class3">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -431,8 +554,9 @@
                 <form string="Class4">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -445,9 +569,21 @@
             <field name="model">hr.class4</field>
             <field name="arch" type="xml">
                 <tree string="Class4">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class4_search" model="ir.ui.view">
+            <field name="name">pr.class4.search</field>
+            <field name="model">hr.class4</field>
+            <field name="arch" type="xml">
+                <search string="Class4">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -483,8 +619,9 @@
                 <form string="Class5">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -500,6 +637,17 @@
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class5_search" model="ir.ui.view">
+            <field name="name">pr.class5.search</field>
+            <field name="model">hr.class5</field>
+            <field name="arch" type="xml">
+                <search string="Class5">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -533,8 +681,9 @@
                 <form string="Class6">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -547,9 +696,21 @@
             <field name="model">hr.class6</field>
             <field name="arch" type="xml">
                 <tree string="Class6">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class6_search" model="ir.ui.view">
+            <field name="name">pr.class6.search</field>
+            <field name="model">hr.class6</field>
+            <field name="arch" type="xml">
+                <search string="Class6">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -583,8 +744,9 @@
                 <form string="Class7">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -597,9 +759,22 @@
             <field name="model">hr.class7</field>
             <field name="arch" type="xml">
                 <tree string="Class7">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        
+        <record id="view_class7_search" model="ir.ui.view">
+            <field name="name">pr.class7.search</field>
+            <field name="model">hr.class7</field>
+            <field name="arch" type="xml">
+                <search string="Class7">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -633,8 +808,9 @@
                 <form string="Class8">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -647,9 +823,21 @@
             <field name="model">hr.class8</field>
             <field name="arch" type="xml">
                 <tree string="Class8">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class8_search" model="ir.ui.view">
+            <field name="name">pr.class8.search</field>
+            <field name="model">hr.class8</field>
+            <field name="arch" type="xml">
+                <search string="Class8">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -682,8 +870,9 @@
                 <form string="Class9">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -696,9 +885,21 @@
             <field name="model">hr.class9</field>
             <field name="arch" type="xml">
                 <tree string="Class9">
+                    <field name="code"/>
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class9_search" model="ir.ui.view">
+            <field name="name">pr.class9.search</field>
+            <field name="model">hr.class9</field>
+            <field name="arch" type="xml">
+                <search string="Class9">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -731,8 +932,9 @@
                 <form string="Class10">
                     <sheet>
                         <group col="4" colspan="2">
+                            <field name="code"/>
                             <field name="name"/>
-                            <field name="class_id" required="1"/>
+                            <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
                 </form>
@@ -748,6 +950,17 @@
                     <field name="name"/>
                     <field name="class_id"/>
                 </tree>
+            </field>
+        </record>
+        
+        <record id="view_class10_search" model="ir.ui.view">
+            <field name="name">pr.class10.search</field>
+            <field name="model">hr.class10</field>
+            <field name="arch" type="xml">
+                <search string="Class10">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         
@@ -801,6 +1014,18 @@
             </field>
         </record>
         
+        
+        <record id="view_class_mapping_search" model="ir.ui.view">
+            <field name="name">pr.class_mapping.search.view</field>
+            <field name="model">hr.class.mapping</field>
+            <field name="arch" type="xml">
+                <search string="Mapping">
+                    <field name="name"/>
+                    <field name="label"/>
+                </search>
+            </field>
+        </record>
+        
         <record id="view_class_mapping_action" model="ir.actions.act_window">
             <field name="name">Mapping</field>
             <field name="res_model">hr.class.mapping</field>
@@ -831,6 +1056,7 @@
                 <form string="Shifts">
                     <sheet>
                         <group>
+                            <field name="code"/>
                             <field name="name"/>
                         </group>
                     </sheet>
@@ -844,8 +1070,21 @@
             <field name="model">hr.shift</field>
             <field name="arch" type="xml">
                 <tree string="shifts">
+                    <field name="code"/>
                     <field name="name"/>
                 </tree>
+            </field>
+        </record>
+        
+        <!--Shift Search view -->
+        <record id="view_shift_search" model="ir.ui.view">
+            <field name="name">pr.hr.shift.search</field>
+            <field name="model">hr.shift</field>
+            <field name="arch" type="xml">
+                <search string="shifts">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
             </field>
         </record>
         

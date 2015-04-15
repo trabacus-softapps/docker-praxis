@@ -28,3 +28,5 @@ manager_hr_holidays_status,hr_holidays_status,hr_holidays.model_hr_holidays_stat
 manager_hr_job,hr_job,hr.model_hr_job,group_praxis_manager,1,1,1,0
 manager_res_bank,res_bank,base.model_res_bank,group_praxis_manager,1,1,1,0
 manager_res_partner_bank,res_partner_bank,base.model_res_partner_bank,group_praxis_manager,1,1,1,0
+manager_res_country_state,res_country_state,base.model_res_country_state,group_praxis_manager,1,1,1,0
+manager_res_partner,res_partner,base.model_res_partner,group_praxis_manager,1,1,1,1
