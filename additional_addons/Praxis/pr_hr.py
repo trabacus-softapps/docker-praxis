@@ -153,17 +153,21 @@ class hr_employee(osv.osv):
         res = {}
        
         if f_get in ('days','rate'):
-            res['monthly_pay'] = days_payable * (unit_pay_rate * 8)
+            res['monthly_pay'] = days_payable * (unit_pay_rate * 8) if (days_payable and unit_pay_rate) else monthly_pay
             res['annual_pay'] = res['monthly_pay'] * 12
+            res['unit_pay_rate'] = (monthly_pay / (days_payable * 8))  if days_payable  else unit_pay_rate
+            
+            if not unit_pay_rate and not days_payable:
+                 res['monthly_pay'] = 0.0
+                 res['annual_pay'] = 0.0
             
         if f_get == 'monthly':
-            res['unit_pay_rate'] = (monthly_pay / (days_payable * 8)) if days_payable else 0
+            res['unit_pay_rate'] = (monthly_pay / (days_payable * 8)) if (monthly_pay and days_payable) else unit_pay_rate 
             res['annual_pay'] = 12 * monthly_pay
-            
         
         if f_get == 'annual':
-            res['monthly_pay'] = annual_pay / 12
-            
+            res['monthly_pay'] = annual_pay / 12 if annual_pay else  days_payable * (unit_pay_rate * 8)
+            res['annual_pay'] = 12 * res['monthly_pay']
         return {'value':res }
             
     

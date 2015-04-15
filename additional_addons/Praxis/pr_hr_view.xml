@@ -55,7 +55,7 @@
                 
                 
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']/field[@name='work_location']" position="before">
-                    <field name="work_email"/>
+                    <field name="work_email" widget="email"/>
                     <field name="work_phone"/>
                     <field name="salutation_id"/>
                     <field name="gender"/>
