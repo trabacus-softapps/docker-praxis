@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<openerp>
+    <data noupdate="1">
+        
+        <!--Employee Type-->
+        <record id="employee_type_1" model="hr.employee.type">
+            <field name="name">Regular Full Time</field>
+            <field name="code">RFT</field>
+        </record>
+        
+        <record id="employee_type_2" model="hr.employee.type">
+            <field name="name">Regular Part Time</field>
+            <field name="code">RPT</field>
+        </record>
+        
+        <!--Salutation -->
+        <record id="employee_salutation_1" model="hr.salutation">
+            <field name="name">Mr.</field>
+            <field name="code">Mr.</field>
+        </record>
+        
+        <record id="employee_salutation_2" model="hr.salutation">
+            <field name="name">Ms.</field>
+            <field name="code">Ms.</field>
+        </record>
+        
+        <record id="employee_salutation_3" model="hr.salutation">
+            <field name="name">Mrs.</field>
+            <field name="code">Mrs.</field>                                                                                                                                                                                                                                                                                
+        </record>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+    
+    </data>
+</openerp>

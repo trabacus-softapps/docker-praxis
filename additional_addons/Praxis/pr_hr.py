@@ -28,6 +28,7 @@ from openerp.osv import fields, osv
 from openerp.tools.translate import _
 from lxml import etree
 from openerp.osv.orm import setup_modifiers
+import re
 
 _logger = logging.getLogger(__name__)
 
@@ -37,6 +38,7 @@ class hr_employee(osv.osv):
     _inherit = "hr.employee"
     
     def name_get(self, cr, uid, ids, context=None):
+        """ TO display the concatenated name (first and last name) """
         if not ids:
             return []
         reads = self.read(cr, uid, ids, ['name','last_name'], context=context)
@@ -49,6 +51,8 @@ class hr_employee(osv.osv):
         return res
     
     def name_search(self, cr, uid, name, args=None, operator='ilike', context=None, limit=100):
+        """ TO search name based on last or first name """
+        
         ids = []
         if name:
             ids = self.search(cr, uid, [('name','ilike',name)]+ args, limit=limit, context=context)
@@ -70,7 +74,6 @@ class hr_employee(osv.osv):
             for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
                 nodes = doc.xpath("//field[@name='"+m.name[0:5]+'_id'+m.name[5:]+"']")
                 for node in nodes:
-                    print "inside Nodes", 1, m.name[0:5]+'_id'+m.name[5:], m.label
                     node.set('invisible', '0')
                     node.set('string', m.label)
                     setup_modifiers(node, res['fields'][m.name[0:5]+'_id'+m.name[5:]])
@@ -84,6 +87,15 @@ class hr_employee(osv.osv):
     # indirections to avoid passing a copy of the overridable method when declaring the function field
     _display_name = lambda self, *args, **kwargs: self._display_name_compute(*args, **kwargs)
     
+    def get_country(self, cr, uid, *args):
+        """ To get the default country as India"""
+        country_ids = self.pool.get('res.country').search(cr, uid, [('name','=','India'),('code','=','IN')])
+        if country_ids:
+            return country_ids[0]
+        return False
+            
+        
+    
     
     
     _columns = {
@@ -91,7 +103,7 @@ class hr_employee(osv.osv):
                 'last_hire_date'    : fields.date('Last Hire Date'),
                 'adj_sen_date'      : fields.date('Adjusted Seniority Date'),
                 'job_start_date'    : fields.date('Job Start Date'),
-                'badge'             : fields.char('Badge'),
+                'badge'             : fields.char('Badge', size=16),
                 'salutation_id'     : fields.many2one('hr.salutation','Salutation'),
                 'ethnic_origin_id'  : fields.many2one('hr.ethnic.origin', 'Ethnic Origin'),
                 'age'               : fields.integer('Age'),
@@ -106,7 +118,9 @@ class hr_employee(osv.osv):
                 
                 
                 #Overidden
-                'identification_id' : fields.char('Employee Number'),
+                'ssnid'             : fields.char('Aadhar No', help='Aadhar Number', size=16),
+                'passport_id'       : fields.char('Passport No', size=16),
+                'identification_id' : fields.char('Employee Number', size=16),
                 'parent_id'         : fields.many2one('hr.employee', 'Primary Supervisor'),
                 'parent_ids'        : fields.many2many('hr.employee','hr_employee_supervisor_rel','employee_id','supervisor_id','Supervisors'),
                 
@@ -135,7 +149,7 @@ class hr_employee(osv.osv):
                 'annual_pay'       : fields.float('Annual Pay'),
                 'pay_group_id'     : fields.many2one('hr.pay.group','Pay Group'),
                 
-                'last_name'        : fields.char('Last Name', size = 32),
+                'last_name'        : fields.char('Last Name', size = 30),
                 'street'           : fields.char('Street'),
                 'street2'          : fields.char('Street2'),
                 'zip'              : fields.char('Zip', size=24, change_default=True),
@@ -148,8 +162,12 @@ class hr_employee(osv.osv):
                 'display_name'     : fields.function(_display_name, type='char', string='Name', select=True),
                   
                 }
+    _defaults = {
+                 'country_id'   : get_country,
+                 }
     
     def onchange_payinfo(self, cr, uid, ids, f_get , unit_pay_rate, days_payable, monthly_pay, annual_pay):
+        """ Pay Info Calculation""" 
         res = {}
        
         if f_get in ('days','rate'):
@@ -185,14 +203,158 @@ class hr_employee(osv.osv):
 
     def onchange_birthdate(self, cr, uid, ids, birthday, context=None):
         res = {}
-        print "birthday",  birthday
         if birthday:
             res['age'] = self.get_age(cr, birthday)
         return {'value':res}
     
+    
+    
+    def onchange_last_hire_date(self, cr, uid, ids, birthday, last_hire_date, context=None):
+        res = {}
+        warning = {}
+        if last_hire_date and not birthday:
+            res={'last_hire_date':False}
+            return {'warning': {
+                        'title'   : _('Warning!'),
+                        'message' : _('Please enter the date of birth ')
+                              }
+                              ,
+                    'value' : res
+                    
+                    }
+        if birthday and last_hire_date:
+            cr.execute("SELECT EXTRACT(year from AGE('"+ last_hire_date +"','" + birthday + "')) as age")
+            age = cr.fetchone()
+            if age and age[0] < 18:
+                res.update({'last_hire_date':False})
+                warning= {
+                        'title'   : _('Warning!'),
+                        'message' : _('Employee age should be 18 as on the Last Hire date')
+                              }
+        return {'value':res, 'warning': warning}
+    
+    
+    
+    def check_alphabet(self, cr, uid, ids, field, context=None):
+        warning = {}
+        if field:
+            if re.match("^([a-zA-Z']{0,30})$",field) != None :
+                return {}
+            else:
+                warning = {
+                        'title': _('Warning!'),
+                        'message': _("Invalid " + ('First Name' if context.get('field')=='name' else 'Last Name') +'\n'+   
+                                      "  Please enter valid "+ ('First Name' if context.get('field')=='name' else 'Last Name'))
+                    }
+            return {'warning': warning, 'value':{context.get('field'):''}}
+        
+    
+    def check_alpha_numeric(self, cr, uid, ids, field, context=None):
+        warning = {}
+        if field:
+            if re.match("^([a-zA-Z0-9']{0,16})$",field) != None :
+                return {}
+            else:
+               warning = {
+                        'title': _('Warning!'),
+                        'message': _("Invalid " + context.get('string','') +'\n'+   
+                                      "  Please enter valid "+ context.get('string',''))
+                    }
+            return {'warning': warning, 'value':{context.get('field'):''}}
+        
+        
+        
+    def onchange_name(self, cr, uid, ids, name, last_name, context):
+        res = {}
+        context = dict(context or {})
+        if name:
+            context.update({'field':'name'})
+            res = self.check_alphabet(cr, uid, ids, name, context)
+        if last_name:
+            context.update({'field':'last_name'})
+            res = self.check_alphabet(cr, uid, ids, last_name, context)
+        return res
+    
+    
+    
+    def onchange_emp_no(self, cr, uid, ids,identification_id, context):
+        warning = {}
+        res = {}
+        context = dict(context or {})
+        if identification_id:
+             context.update({'field':'identification_id', 'string':'Employee Number'})
+             res = self.check_alpha_numeric(cr, uid, ids, identification_id, context)
+             emp_ids = self.search(cr, uid, [('identification_id','=',identification_id)])
+             if emp_ids :
+                 res.update({
+                             'warning' : {
+                                          'title'   : _('Warning!'),
+                                          'message' : _('Employee Number  "'+identification_id + '"  already exists')
+                                          }
+                             })
+                 res.update({
+                                'value':{'identification_id':''}
+                            })
+        return res
+    
+    def onchange_badge(self, cr, uid, ids, badge, context):
+        warning = {}
+        res = {}
+        context = dict(context or {})
+        if badge:
+             context.update({'field':'badge', 'string':'Badge Number'})
+             res = self.check_alpha_numeric(cr, uid, ids, badge, context)
+             emp_ids = self.search(cr, uid, [('badge','=',badge)])
+             if emp_ids :
+                 res.update({
+                             'warning' : {
+                                          'title'   : _('Warning!'),
+                                          'message' : _('Employee Badge Number "'+ badge + '"  already exists')
+                                          }
+                             })
+                 res.update({
+                                'value':{'badge':''}
+                            })
+        return res
+    
+    def onchange_aadhar_no(self, cr, uid, ids, ssnid, context):
+        warning = {}
+        res = {}
+        context = dict(context or {})
+        if ssnid:
+             context.update({'field':'ssnid', 'string':'Aadhar No'})
+             res = self.check_alpha_numeric(cr, uid, ids, ssnid, context)
+             emp_ids = self.search(cr, uid, [('ssnid','=',ssnid)])
+             if emp_ids :
+                 res.update({
+                             'warning' : {
+                                          'title'   : _('Warning!'),
+                                          'message' : _('Aadhar Number "'+ssnid + '"  already exists')
+                                          }
+                             })
+                 res.update({
+                                'value':{'ssnid':''}
+                            })
+        return res
+    
+    def onchange_passport_no(self, cr, uid, ids, passport_id, context):
+        res = {}
+        context = dict(context or {})
+        if passport_id:
+             context.update({'field':'passport_id', 'string':'Passport No'})
+             res = self.check_alpha_numeric(cr, uid, ids, passport_id, context)
+        return res
+    
+        
+    
+    
     def create(self, cr, uid, vals, context=None):
         if vals.get('birthday',False):
             vals.update({'age' : self.get_age(cr, vals.get('birthday'))})
+        
+        if not vals.get('class_id1'):
+            raise osv.except_osv(_('Warning!'), _('Select atleast one class under Organisation Tab'))
+                                 
         return super(hr_employee, self).create(cr, uid, vals, context)
     
     def write(self, cr, uid, ids, vals, context=None):
@@ -201,4 +363,13 @@ class hr_employee(osv.osv):
         return super(hr_employee, self).write(cr, uid, ids, vals, context) 
 
 hr_employee()
+
+class resource_resource(osv.osv):
+    _inherit = "resource.resource"
+    _description = "Resource Detail"
+    _columns = {
+        'name': fields.char("Name", required=True, size=30)
+        }
+resource_resource()
+    
     

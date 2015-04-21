@@ -9,9 +9,7 @@
             <field name="inherit_id" ref="hr.view_employee_form"/>
             <field name="arch" type="xml">
                 
-            <!--    <xpath expr="//notebook/page[@string='Public Information']" position="attributes">
-                    <attribute name="string">Primary Details</attribute>
-                </xpath>-->
+
                 
                 <xpath expr="//div[@class='oe_title']/label[@for='name']" position="before">
                     <h1>
@@ -20,11 +18,12 @@
                     
                     <label for="last_name" class="oe_edit_only"/>
                     <h1>
-                        <field name="last_name" class="oe_edit_only"/>
+                        <field name="last_name" class="oe_edit_only" required="1" on_change="onchange_name(name, last_name, context)"/>
                     </h1>
                 </xpath>
                 
                 <xpath expr="//div[@class='oe_title']/h1/field[@name='name']" position="attributes">
+                    <attribute name="on_change">onchange_name(name, last_name, context)</attribute>
                     <attribute name='class'>oe_edit_only</attribute>
                 </xpath>
                 
@@ -45,82 +44,77 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 
+                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']/field[@name='mobile_phone']" position="replace"/>
+                
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']/field[@name='address_id']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 
-              <!--  <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Birth']" position="replace"/>
+             
                 
-                <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Birth']" position="replace"/>-->
-                
-                
-                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']/field[@name='work_location']" position="before">
-                    <field name="work_email" widget="email"/>
-                    <field name="work_phone"/>
-                    <field name="salutation_id"/>
-                    <field name="gender"/>
-                    <field name="marital"/>
-                    <field name="identification_id"/>
-                    <field name="badge"/>
-                    <field name="ssnid" string="Aadhar No"/>
-                    <field name="passport_id"/>
-                    <field name="birthday" on_change="onchange_birthdate(birthday, context)"/>
-                    <field name="age" readonly="1"/>
-                    <field name="last_hire_date"/>
-                    <field name="otherid" string="Blood Group"/>
-                    <field name="disability"/>
-                    <field name="smoker"/>
+                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']" position="before">
+                    <group>
+                        <field name="salutation_id" options="{'no_create':True, 'no_open':True}"/>
+                        <field name="gender"/>
+                        <field name="marital"/>
+                        <field name="identification_id" on_change="onchange_emp_no(identification_id, context)" required="1"/>
+                        <field name="badge" on_change="onchange_badge(badge, context)" required="1"/>
+                        <field name="ssnid" string="Aadhar Number" on_change="onchange_aadhar_no(ssnid, context)"/>
+                        <field name="passport_id" string="Passport Number" on_change="onchange_passport_no(passport_id, context)"/>
+                        <field name="birthday" on_change="onchange_birthdate(birthday, context)"/>
+                        <field name="age" readonly="1"/>
+                        <field name="last_hire_date" on_change="onchange_last_hire_date(birthday, last_hire_date, context)"/>
+                        <field name="otherid" string="Blood Group"/>
+                        <field name="org_hire_date"/>
+                    </group>
+                    <group>
+                        <field name="active"/>
+                        <field name="salaried"/>
+                        <field name="employee_type_id" options="{'no_create':True,'no_open':True}"/>
+                        <field name="parent_id" options="{'no_create':True,'no_open':True}"/>
+                        <field name="parent_ids" widget="many2many_tags" options="{'no_create':True,'no_open':True}"/>
+                        
+                        <separator string="Contact Details"/>
+                        <newline/>
+                        <label for="street" string="Address"/>
+                        <div>
+                            <field name="street" placeholder="Street..." />
+                            <field name="street2"/>
+                            <div class="address_format">
+                                <field name="city" placeholder="City" style="width: 40%%" />
+                                <field name="state_id" class="oe_no_button" placeholder="State" style="width: 37%%" 
+                                    options='{"no_open": True, "no_create":True}' on_change="onchange_state(state_id)"
+                                    domain="[('country_id','=',country_id)]"/>
+                                <field name="zip" placeholder="ZIP" style="width: 20%%" />
+                            </div>
+                            <field name="country_id" placeholder="Country" class="oe_no_button" options='{"no_open": True, "no_create": True}'/>
+                        </div>
+                        <field name="work_email" widget="email"/>
+                        <field name="work_phone"/>
+                        <field name="mobile_phone"/>
+                    </group>
                     
                 </xpath>
-                
-                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Contact Information']/field[@name='work_location']" position="after">
-                    <field name="org_hire_date"/>
-                    <field name="adj_sen_date"/>
-                </xpath>
-                
-             <!--   <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Citizenship &amp; Other Information']/field[@name='identification_id']" position="replace"/>
-                
-                <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Citizenship &amp; Other Information']/field[@name='passport_id']" position="replace"/>
-                
-                <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Citizenship &amp; Other Information']/field[@name='otherid']" position="replace"/>
-                
-                <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Citizenship &amp; Other Information']/field[@name='bank_account_id']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>-->
+             
                 
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='department_id']" position="replace"/>
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='job_id']" position="replace"/>
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='coach_id']" position="replace"/>
                 
                 
-<!--                <xpath expr="//notebook/page[@string='Personal Information']/group/group[@string='Status']" position="replace"/>-->
                
                 
                 <xpath expr="//notebook/page[@string='HR Settings']/group/group[@string='Active']" position="replace"/>
                 
-                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='parent_id']" position="before">
-                    <field name="active"/>
-                    <field name="salaried"/>
-                    <field name="employee_type_id"/>
-                    <field name="job_start_date"/>
+                
+                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']" position="attributes">
+                    <attribute name="invisible">1</attribute>
                 </xpath>
                 
-                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='parent_id']" position="after">
-                    <field name="parent_ids" widget="many2many_tags"/>
-                    <separator string="Contact Details"/>
-                    <newline/>
-                    <label for="street" string="Address"/>
-                    <div>
-                        <field name="street" placeholder="Street..." />
-                        <field name="street2"/>
-                        <div class="address_format">
-                            <field name="city" placeholder="City" style="width: 40%%" />
-                            <field name="state_id" class="oe_no_button" placeholder="State" style="width: 37%%" options='{"no_open": True}' on_change="onchange_state(state_id)"/>
-                            <field name="zip" placeholder="ZIP" style="width: 20%%" />
-                        </div>
-                        <field name="country_id" placeholder="Country" class="oe_no_button" options='{"no_open": True, "no_create": True}'/>
-                    </div>
-                </xpath>
+               
                 
                 <xpath expr="//notebook/page[@string='Public Information']" position="after">
                     <page string="Organisation">
@@ -155,7 +149,6 @@
                                 <field name="pay_date" />
                                 <field name="days_payable" on_change="onchange_payinfo('days',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="unit_pay_rate" on_change="onchange_payinfo('rate',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
-                               <!-- <field name="pay_period_sal" />-->
                                 <field name="monthly_pay" on_change="onchange_payinfo('monthly',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="annual_pay" on_change="onchange_payinfo('annual',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="pay_group_id"/>

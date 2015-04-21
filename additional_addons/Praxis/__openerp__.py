@@ -15,6 +15,8 @@
              'pr_hr_view.xml',
              'security/pr_security.xml',
              'security/ir.model.access.csv',
+             'data/res_country_state_data.xml',
+             'data/pr_employee_master_data.xml',
              
        
     ],

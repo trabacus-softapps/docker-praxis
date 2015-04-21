@@ -12,7 +12,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -26,7 +26,7 @@
             <field name="arch" type="xml">
                 <tree string="Job Descrption">
                     <field name="code"/>
-                    <field name="name"/>
+                    <field name="name" required="1"/>
                 </tree>
             </field>
         </record>
@@ -38,7 +38,7 @@
             <field name="arch" type="xml">
                 <search string="Job Descrption">
                     <field name="code"/>
-                    <field name="name"/>
+                    <field name="name" required="1"/>
                 </search>
             </field>
         </record>
@@ -71,7 +71,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -131,7 +131,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -189,7 +189,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -247,7 +247,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -306,7 +306,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -367,7 +367,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
@@ -429,7 +429,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -456,7 +456,7 @@
             <field name="arch" type="xml">
                 <search string="Class2">
                     <field name="code"/>
-                    <field name="name"/>
+                    <field name="name" required="1"/>
                 </search>
             </field>
         </record>
@@ -492,7 +492,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -555,7 +555,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -620,7 +620,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -682,7 +682,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -745,7 +745,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -809,7 +809,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -871,7 +871,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -933,7 +933,7 @@
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                             <field name="class_id" required="1" options='{"no_create": True}'/>
                         </group>
                     </sheet>
@@ -1057,7 +1057,7 @@
                     <sheet>
                         <group>
                             <field name="code"/>
-                            <field name="name"/>
+                            <field name="name" required="1"/>
                         </group>
                     </sheet>
                 </form>
