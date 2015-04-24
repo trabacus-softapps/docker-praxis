@@ -302,37 +302,48 @@
             <field name="name">pr.hr.pay.group.form</field>
             <field name="model">hr.pay.group</field>
             <field name="arch" type="xml">
-                <form string="Pay Group">
+                <form string="Pay Group Information">
                     <sheet>
-                        <group>
-                            <field name="code"/>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
                             <field name="name" required="1"/>
+                            <field name="period_start_dt" required="1"/>
+                            <field name="start_week" required="1"/>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
         
-        <!--Ethnic Origin Tree view -->
+        <!--Pay Group Tree view -->
         <record id="view_pay_group_tree" model="ir.ui.view">
             <field name="name">pr.hr.pay.group.tree</field>
             <field name="model">hr.pay.group</field>
             <field name="arch" type="xml">
-                <tree string="Pay Group">
+                <tree string="Pay Group Information">
                     <field name="code"/>
                     <field name="name"/>
+                    <field name="period_start_dt"/>
+                    <field name="period_end_dt"/>
+                    <field name="next_start_dt"/>
+                    <field name="next_end_dt"/>
                 </tree>
             </field>
         </record>
         
-        <!--Ethnic Origin Search view -->
+        <!--Pay Group Search view -->
         <record id="view_pay_group_search" model="ir.ui.view">
             <field name="name">pr.hr.pay.group.search</field>
             <field name="model">hr.pay.group</field>
             <field name="arch" type="xml">
-                <search string="Pay Group">
+                <search string="Pay Group Information">
                     <field name="code"/>
                     <field name="name"/>
+                    <field name="period_start_dt"/>
+                    <field name="period_end_dt"/>
+                    <field name="next_start_dt"/>
+                    <field name="next_end_dt"/>
+                    <field name="start_week"/>
                 </search>
             </field>
         </record>
@@ -353,6 +364,341 @@
         </record>
         
         <menuitem action="view_pay_group_action" id="menu_pay_group_id" sequence="9" parent="hr.menu_hr_configuration_employees"/>
+        
+       
+        <!-- **************************************************************************************************
+            Server Action for Pay Group
+        *************************************************************************************************-->
+        <record id="action_roll_over_pay" model="ir.actions.server">
+            <field name="name">Rollover Pay</field>
+            <field name="condition">True</field>
+            <field name="type">ir.actions.server</field>
+            <field name="model_id" ref="model_hr_pay_group"/>
+            <field name="state">code</field>
+            <field name="code">
+self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
+            </field>
+        </record>
+        
+        <record id="action_roll_over_pay_wizard" model="ir.values">
+            <field eval="'client_action_multi'" name="key2"/>
+            <field eval="'hr.pay.group'" name="model"/>
+            <field name="name">Rollover Pay</field>
+            <field eval="'ir.actions.server,%d'%action_roll_over_pay" name="value"/>
+        </record>
+        
+        
+    <!--        ****************************************************************************************************
+                            HR Pay Codes
+        *****************************************************************************************************  -->     
+        <!--Pay codes form view -->
+        <record id="view_pay_code_form" model="ir.ui.view">
+            <field name="name">pr.hr.pay.codes.form</field>
+            <field name="model">hr.pay.codes</field>
+            <field name="arch" type="xml">
+                <form string="Earning Information">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
+                            <field name="name" required="1"/>
+                            <field name="category" required="1"/>
+                            <field name="emp_calc" required="1"/>
+                            <field name="post_code" />
+                            <field name="rate"/>
+                            <field name="active"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Pay Group Tree view -->
+        <record id="view_pay_codes_tree" model="ir.ui.view">
+            <field name="name">pr.hr.pay.codes.tree</field>
+            <field name="model">hr.pay.codes</field>
+            <field name="arch" type="xml">
+                <tree string="Earning Information">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="category"/>
+                    <field name="emp_calc"/>
+                    <field name="post_code"/>
+                    <field name="rate"/>
+                    <field name="active"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Pay Group Search view -->
+        <record id="view_pay_codes_search" model="ir.ui.view">
+            <field name="name">pr.hr.pay.codes.search</field>
+            <field name="model">hr.pay.codes</field>
+            <field name="arch" type="xml">
+                <search string="Earning Information">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="post_code"/>
+                    <field name="category"/>
+                    <field name="emp_calc"/>
+                    <field name="rate"/>
+                    <field name="active"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_pay_codes_action" model="ir.actions.act_window">
+            <field name="name">Pay Codes</field>
+            <field name="res_model">hr.pay.codes</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Pay Codes.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_pay_codes_action" id="menu_pay_codes_id" sequence="9" parent="hr.menu_hr_configuration_employees"/>
+        
+        <!--        ****************************************************************************************************
+                                HR Rounding Master
+            *****************************************************************************************************  -->
+        
+        <!--Rounding form view -->
+        <record id="view_rounding_form" model="ir.ui.view">
+            <field name="name">pr.rounding.codes.form</field>
+            <field name="model">hr.rounding</field>
+            <field name="arch" type="xml">
+                <form string="Rounding Rule">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
+                            <field name="name" required="1"/>
+                        </group>
+                        <separator string="Rounding Rule"/>
+                        <group col="3" colspan="1">
+                            <field name="clock1" nolabel="1"/>
+                            <field name="type1" nolabel="1"/>
+                            <field name="hours1" nolabel="1"/>
+                            <field name="clock2" nolabel="1"/>
+                            <field name="type2" nolabel="1"/>
+                            <field name="hours2" nolabel="1"/>
+                        </group>
+                            
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Rounding Tree view -->
+        <record id="view_rounding_tree" model="ir.ui.view">
+            <field name="name">pr.rounding.tree</field>
+            <field name="model">hr.rounding</field>
+            <field name="arch" type="xml">
+                <tree string="Rounding Rule">
+                    <field name="code"/>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Pay Group Search view -->
+        <record id="view_rounding_search" model="ir.ui.view">
+            <field name="name">pr.hr.rounding.search</field>
+            <field name="model">hr.rounding</field>
+            <field name="arch" type="xml">
+                <search string="Rounding Rule">
+                    <field name="code"/>
+                    <field name="name"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_rounding_action" model="ir.actions.act_window">
+            <field name="name">Rounding Rule</field>
+            <field name="res_model">hr.rounding</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Rounding.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_rounding_action" id="menu_rounding_id" sequence="9" parent="hr.menu_hr_configuration_employees" name="Rounding"/>
+        
+        <!--        ****************************************************************************************************
+                                HR Lunch Master
+            *****************************************************************************************************  -->
+        
+        <!--Lunch form view -->
+        <record id="view_lunch_form" model="ir.ui.view">
+            <field name="name">pr.lunch.form</field>
+            <field name="model">hr.lunch</field>
+            <field name="arch" type="xml">
+                <form string="Lunch Details">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
+                            <field name="name" required="1"/>
+                            <label for="lunch_hours"/>
+                            <div>
+                                <field name="lunch_hours" class="oe_inline" nolabel="1"/> Minutes
+                            </div>
+                            <label for="after_work_hour"/>
+                            <div>
+                                <field name="after_work_hour" class="oe_inline" nolabel="1"/> Hours Worked
+                            </div>
+                            <field name="automatic"/>
+                            <field name="paid_by_employer"/>
+                            <field name="post"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Lunch Tree view -->
+        <record id="view_lunch_tree" model="ir.ui.view">
+            <field name="name">pr.lunch.tree</field>
+            <field name="model">hr.lunch</field>
+            <field name="arch" type="xml">
+                <tree string="Lunch Details">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="lunch_hours"/>
+                    <field name="after_work_hour"/>
+                    <field name="automatic"/>
+                    <field name="paid_by_employer"/>
+                    <field name="post"/>
+                    <field name="paycode_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Lunch Search view -->
+        <record id="view_lunch_search" model="ir.ui.view">
+            <field name="name">pr.lunch.search</field>
+            <field name="model">hr.lunch</field>
+            <field name="arch" type="xml">
+                <search string="Rounding Rule">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="lunch_hours"/>
+                    <field name="after_work_hour"/>
+                    <field name="automatic"/>
+                    <field name="paid_by_employer"/>
+                    <field name="post"/>
+                    <field name="paycode_id"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_lunch_action" model="ir.actions.act_window">
+            <field name="name">Lunch</field>
+            <field name="res_model">hr.lunch</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Lunch Details.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_lunch_action" id="menu_lunch_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Lunch Details"/>
+        
+        <!--        ****************************************************************************************************
+                                HR Employee Holiday  Master
+            *****************************************************************************************************  -->
+        
+        <!--Employee form view -->
+        <record id="view_emp_holiday_form" model="ir.ui.view">
+            <field name="name">pr.emp.holiday.form</field>
+            <field name="model">hr.emp.holiday</field>
+            <field name="arch" type="xml">
+                <form string="Create Holidays">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
+                            <field name="name" required="1"/>
+                            <field name="date"/>
+                            <field name="min_days_employed"/>
+                            <field name="hours"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
+                            <field name="pay_holiday"/>
+                            <field name="recurring"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Employee Tree view -->
+        <record id="view_emp_holiday_tree" model="ir.ui.view">
+            <field name="name">pr.emp.holiday.tree</field>
+            <field name="model">hr.emp.holiday</field>
+            <field name="arch" type="xml">
+                <tree string="Create Holidays">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="min_days_employed"/>
+                    <field name="hours"/>
+                    <field name="paycode_id"/>
+                    <field name="pay_holiday"/>
+                    <field name="recurring"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Employee Search view -->
+        <record id="view_emp_holiday_search" model="ir.ui.view">
+            <field name="name">pr.emp.holiday.search</field>
+            <field name="model">hr.emp.holiday</field>
+            <field name="arch" type="xml">
+                <search string="Create Holidays">
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="date"/>
+                    <field name="min_days_employed"/>
+                    <field name="hours"/>
+                    <field name="paycode_id"/>
+                    <field name="pay_holiday"/>
+                    <field name="recurring"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_emp_holiday_action" model="ir.actions.act_window">
+            <field name="name">Create Holidays</field>
+            <field name="res_model">hr.emp.holiday</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Holiday Codes.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_emp_holiday_action" id="menu_emp_holiday_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Holiday Codes"/>
+        
+        
         
 <!--        ****************************************************************************************************
                                 HR Class Details
@@ -1106,7 +1452,7 @@
         <menuitem action="view_shift_action" id="menu_shift_id" sequence="11" parent="hr.menu_hr_configuration_employees"/>
         
 
-        
+
         
         
     </data>

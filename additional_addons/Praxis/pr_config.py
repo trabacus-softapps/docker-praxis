@@ -27,6 +27,10 @@ from openerp.modules.module import get_module_resource
 from openerp.osv import fields, osv
 from openerp.tools.translate import _
 
+from datetime import date, datetime, timedelta
+from dateutil.relativedelta import relativedelta
+import calendar
+
 _logger = logging.getLogger(__name__)
 
 
@@ -82,11 +86,123 @@ hr_job_code()
 class hr_pay_group(osv.osv):
     _name = 'hr.pay.group'
     _description = 'Pay Group'
+    
+    def get_next_dates(self, cr, uid, ids, field_name, args, context=None):
+        """ To Calculate the dates based on period start Date
+        
+        input : period_start_dt : '2015-04-05'
+        outputs: period_end_dt : '2015-04-30'
+                 next_start_dt :  '2015-05-01'
+                 next_end_dt   :  '2015-05-31'
+        """
+        res = {}
+        for case in self.browse(cr, uid, ids):
+            res[case.id]={
+                          'period_end_dt': False,
+                          'next_start_dt': False,
+                          'next_end_dt'  : False,
+                          }
+            if case.period_start_dt:
+                period_date = datetime.strptime(case.period_start_dt, '%Y-%m-%d')
+                period_end_dt = period_date.replace(day = calendar.monthrange(period_date.year, period_date.month)[1])
+                next_start_dt = period_end_dt + relativedelta(days = 1)
+                
+                res[case.id]['period_end_dt'] = period_end_dt
+                res[case.id]['next_start_dt'] = next_start_dt
+                res[case.id]['next_end_dt'] = next_start_dt.replace(day = calendar.monthrange(next_start_dt.year, next_start_dt.month)[1])
+                
+            
+        return res
+    
     _columns = {
-                'code'  : fields.char('Code'),
-                'name' : fields.char('Description')
+                'code'         : fields.char('Code'),
+                'name'         : fields.char('Description'),
+                'period_start_dt' : fields.date('Period Start'),
+                'period_end_dt'   : fields.function(get_next_dates, string='Period End', type='date', multi="all"),
+                'next_start_dt'   : fields.function(get_next_dates, string='Next Start', type='date',  multi="all"),
+                'next_end_dt'     : fields.function(get_next_dates, string='Next End', type='date',  multi="all"),
+                'start_week'   : fields.selection([('sun','Sunday'),('mon','Monday'),('tue','Tuesday'),
+                                                   ('wed','Sunday'),('thu','Thursday'),('fri','Friday'),
+                                                   ('sat','Saturday')], 'Start Week'),
+                 
                 }
+    
+    def roll_overpay(self, cr, uid, ids, context=None):
+        """ To Update the period start date with next start date"""
+        for case in self.browse(cr, uid, ids):
+            self.write(cr, uid, [case.id], {'period_start_dt':case.next_start_dt}, context)
+        return True
+    
 hr_pay_group()
+
+class hr_pay_codes(osv.osv):
+    _name = 'hr.pay.codes'
+    _description = "Pay Codes"
+    _columns = {
+                'code'         : fields.char('Code'),
+                'name'         : fields.char('Description'),
+                'post_code'    : fields.char('Postcode'),
+                'category'     : fields.selection([('hours_worked','Hours Worked'),('attendance','Attendance'),
+                                                   ('on_call','On Call'),('mileage','Mileage'),('unpaid','UnPaid')],'Category'),
+                'emp_calc'     : fields.selection([('pay_hour','Pay Hours'),('flat_amount','Flat Amount'),
+                                                   ('quantity','Quantity')],'Employee Calc Method'),
+                'rate'         : fields.float('Rate'),
+                'active'       : fields.boolean('Active')    
+                }
+hr_pay_codes()
+
+class hr_rounding(osv.osv):
+    _name = 'hr.rounding'
+    _description = 'Hr Rounding'
+    _columns = {
+                'code'         : fields.char('Code'),
+                'name'         : fields.char('Description'),
+                'clock1'       : fields.selection([('clock_in','Clock In'),('clock_out','Clock Out')],'Clock1'),
+                'clock2'       : fields.selection([('clock_in','Clock In'),('clock_out','Clock Out')],'Clock2'),
+                'type1'        : fields.selection([('round_forward','Round Forward'),('round_back','Round Back'),
+                                                   ('round_near','Round Nearest')],'Type1'),
+                'type2'        : fields.selection([('round_forward','Round Forward'),('round_back','Round Back'),
+                                                   ('round_near','Round Nearest')],'Type2'),
+                'hours1'       : fields.char('Hours1'),
+                'hours2'       : fields.char('Hours1'),
+                }
+    _defaults = {
+                 'clock1'  : 'clock_in',
+                 'clock2'  : 'clock_out'
+                 }
+hr_rounding()
+
+class hr_lunch(osv.osv):
+    _name = 'hr.lunch'
+    _description = 'Hr Lunch Details'
+    _columns = {
+                'code'             : fields.char('Code'),
+                'name'             : fields.char('Description'),
+                'lunch_hours'      : fields.integer('Standard Lunch of'),
+                'after_work_hour'  : fields.integer('After'),
+                'automatic'        : fields.boolean('Automatic'),
+                'paid_by_employer' : fields.boolean('Paid by Employer'),
+                'post'             : fields.boolean('Post as Separate Pay Code'),
+                'paycode_id'       : fields.many2one('hr.pay.codes', 'Pay Code')
+                }
+hr_lunch()
+
+class hr_emp_holiday(osv.osv):
+    _name = 'hr.emp.holiday'
+    _columns = {
+                'code'    : fields.char('Code'),
+                'name'    : fields.char('Description'),
+                'date'    : fields.date('Date'),
+                'min_days_employed' : fields.integer('Minimum Days Employeed'),
+                'hours'   : fields.float('Hours'),
+                'paycode_id' : fields.many2one('hr.pay.codes', 'Pay Code'),
+                'pay_holiday' : fields.selection([('work_day_bef','Work Day Before'),('work_day_aft','Work Day After'),
+                                                  ('work_day_bef_aft','Work Day Before or After')
+                                                  ,('work_day_aft_bef','Work Day Before and After')],'Pay Holiday when'),
+                'recurring' : fields.boolean('Recurring'),    
+                }
+hr_emp_holiday()
+
 
 
 class hr_shift(osv.osv):
