@@ -27,7 +27,49 @@
         <record id="employee_salutation_3" model="hr.salutation">
             <field name="name">Mrs.</field>
             <field name="code">Mrs.</field>                                                                                                                                                                                                                                                                                
-        </record>                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                
+        </record>  
+        
+        <!--Week Days -->
+        <record id="week_day_0" model="hr.weekdays">
+            <field name="name">All Selected</field>
+            <field name="code">All</field>
+        </record>
+        
+        <record id="week_day_1" model="hr.weekdays">
+            <field name="name">Sunday</field>
+            <field name="code">Sun</field>
+        </record>
+        
+        <record id="week_day_2" model="hr.weekdays">
+            <field name="name">Monday</field>
+            <field name="code">Mon</field>
+        </record>
+        
+        <record id="week_day_3" model="hr.weekdays">
+            <field name="name">Tuesday</field>
+            <field name="code">Tue</field>
+        </record>
+        
+        <record id="week_day_4" model="hr.weekdays">
+            <field name="name">Wednesday</field>
+            <field name="code">Wed</field>
+        </record>
+        
+        <record id="week_day_5" model="hr.weekdays">
+            <field name="name">Thurday</field>
+            <field name="code">Thu</field>
+        </record>
+        
+        <record id="week_day_6" model="hr.weekdays">
+            <field name="name">Friday</field>
+            <field name="code">Fri</field>
+        </record>
+        
+        <record id="week_day_7" model="hr.weekdays">
+            <field name="name">Saturday</field>
+            <field name="code">Sat</field>
+        </record>
+        
     
     </data>
 </openerp>

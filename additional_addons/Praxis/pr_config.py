@@ -127,6 +127,13 @@ class hr_pay_group(osv.osv):
                  
                 }
     
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)',
+            'Code must be unique per Record!'),
+        ('name_uniq', 'unique(name)',
+            'Description must be unique per Record!'),
+    ]
+    
     def roll_overpay(self, cr, uid, ids, context=None):
         """ To Update the period start date with next start date"""
         for case in self.browse(cr, uid, ids):
@@ -145,10 +152,19 @@ class hr_pay_codes(osv.osv):
                 'category'     : fields.selection([('hours_worked','Hours Worked'),('attendance','Attendance'),
                                                    ('on_call','On Call'),('mileage','Mileage'),('unpaid','UnPaid')],'Category'),
                 'emp_calc'     : fields.selection([('pay_hour','Pay Hours'),('flat_amount','Flat Amount'),
-                                                   ('quantity','Quantity')],'Employee Calc Method'),
+                                                   ('quantity','Quantity')],'Type'),
                 'rate'         : fields.float('Rate'),
                 'active'       : fields.boolean('Active')    
                 }
+    
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)',
+            'Code must be unique per Record!'),
+        ('name_uniq', 'unique(name)',
+            'Description must be unique per Record!'),
+    ]
+    
+    
 hr_pay_codes()
 
 class hr_rounding(osv.osv):
@@ -157,8 +173,8 @@ class hr_rounding(osv.osv):
     _columns = {
                 'code'         : fields.char('Code'),
                 'name'         : fields.char('Description'),
-                'clock1'       : fields.selection([('clock_in','Clock In'),('clock_out','Clock Out')],'Clock1'),
-                'clock2'       : fields.selection([('clock_in','Clock In'),('clock_out','Clock Out')],'Clock2'),
+                'clock1'       : fields.selection([('clock_in','Clock In')],'Clock1'),
+                'clock2'       : fields.selection([('clock_out','Clock Out')],'Clock2'),
                 'type1'        : fields.selection([('round_forward','Round Forward'),('round_back','Round Back'),
                                                    ('round_near','Round Nearest')],'Type1'),
                 'type2'        : fields.selection([('round_forward','Round Forward'),('round_back','Round Back'),
@@ -170,6 +186,31 @@ class hr_rounding(osv.osv):
                  'clock1'  : 'clock_in',
                  'clock2'  : 'clock_out'
                  }
+    
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)',
+            'Code must be unique per Record!'),
+        ('name_uniq', 'unique(name)',
+            'Description must be unique per Record!'),
+    ]
+    
+    
+    def create(self, cr, uid, vals, context=None):
+        res = super(hr_rounding, self).create(cr, uid, vals, context)
+        
+        if not vals.get('clock1') and not vals.get('clock2'):
+            raise osv.except_osv(_('Warning!'), _('Either Clock In or Clock Out is Mandatory'))
+        
+        return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        res = super(hr_rounding, self).write(cr, uid, ids, vals, context)
+        for case in self.browse(cr, uid, ids):
+            if not vals.get('clock1', case.clock1) and not vals.get('clock2', case.clock1):
+                raise osv.except_osv(_('Warning!'), _('Either Clock In or Clock Out is Mandatory'))
+        return res
+    
+    
 hr_rounding()
 
 class hr_lunch(osv.osv):
@@ -185,10 +226,19 @@ class hr_lunch(osv.osv):
                 'post'             : fields.boolean('Post as Separate Pay Code'),
                 'paycode_id'       : fields.many2one('hr.pay.codes', 'Pay Code')
                 }
+    
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)',
+            'Code must be unique per Record!'),
+        ('name_uniq', 'unique(name)',
+            'Description must be unique per Record!'),
+    ]
+    
 hr_lunch()
 
 class hr_emp_holiday(osv.osv):
     _name = 'hr.emp.holiday'
+    _description = 'Hr Employee Holiday'
     _columns = {
                 'code'    : fields.char('Code'),
                 'name'    : fields.char('Description'),
@@ -201,7 +251,91 @@ class hr_emp_holiday(osv.osv):
                                                   ,('work_day_aft_bef','Work Day Before and After')],'Pay Holiday when'),
                 'recurring' : fields.boolean('Recurring'),    
                 }
+    
+    _sql_constraints = [
+        ('code_uniq', 'unique(code)',
+            'Code must be unique per Record!'),
+        ('name_uniq', 'unique(name)',
+            'Description must be unique per Record!'),
+    ]
+    
 hr_emp_holiday()
+
+class hr_week_days(osv.osv):
+    _name = 'hr.weekdays'
+    _description = 'Hr Week Days'
+    _columns = {
+                'name' : fields.char('Name')
+                }
+hr_week_days()
+
+class hr_ot_rule(osv.osv):
+    _name = 'hr.ot.rule'
+    _description = 'Hr OT Rule'
+    _columns = {
+                'work_hours'  : fields.integer('Hours : Greater Than'),
+                'paycode_id'     : fields.many2one('hr.pay.codes','Pay Code'),
+                'weekday_ids' : fields.many2many('hr.weekdays','rule_weekdays_rel','rule_id','week_id', 'Days'),
+                'rule_id'     : fields.many2one('hr.time.rule','Time Rule')   
+                }
+    
+#     def onchange_week(self, cr, uid, ids, week_ids, context=None):
+#         res = {}
+#         days_obj = self.pool.get('hr.weekdays')
+#         if week_ids:
+#             for w in week_ids:
+#                 if w and w[2]:
+#                     days = days_obj.browse(cr, uid, w[2])
+#                     if days.name == 'All Selected':
+#                         day_ids = days_obj.search(cr, uid, [('name','!=','All Selected')])
+#                         week_ids = [(6, 0, [day]) for day in day_ids]
+#                         res['weekday_ids'] = day_ids
+#         return {'value' :res}
+    
+hr_ot_rule()
+
+class hr_time_rule(osv.osv):
+    _name = 'hr.time.rule'
+    _description = 'Hr Time Rule'
+    _columns = {
+                'code'    : fields.char('Rule Code'),
+                'name'    : fields.char('Description'),
+                'work_hours' : fields.float('Work Hours Per Day'),
+                'lunch_id'   : fields.many2one('hr.lunch','Meal Break'),
+                'paycode_id' : fields.many2one('hr.pay.codes','Pay Code'),
+                'missing_punches' : fields.selection([('unpost','Do Not Post Missing Post'),
+                                                      ('post','Post Missing Punch'),('dntcalc','Do Not Calculate Missing Punch')],'Missing Punches'),
+                'roundind_id'   : fields.many2one('hr.rounding','Rounding'),
+                'ot_rule_line'     : fields.one2many('hr.ot.rule','rule_id','Ot Rule')
+                
+                }
+    
+    def paycode_duplication(self, cr, uid, ids, context = None):
+        paycodes = {}
+        for case in self.browse(cr, uid, ids):
+            for ln in case.ot_rule_line:
+                if ln.paycode_id.id not in paycodes:
+                    paycodes[ln.paycode_id.id] = [x.id for x in ln.weekday_ids]
+                else:
+                    for w in ln.weekday_ids:
+                        if w.id in paycodes[ln.paycode_id.id] :
+                            raise osv.except_osv(_('Warning!'), _('Paycode %s and week day %s already exist')%(ln.paycode_id.name, w.name))
+                 
+        return True
+    
+    def create(self, cr, uid, vals, context=None):
+        context = dict(context or {})
+        res = super(hr_time_rule, self).create(cr, uid, vals, context)
+        self.paycode_duplication(cr, uid, [res], context)
+        return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        context = dict(context or {})
+        res = super(hr_time_rule, self).write(cr, uid, ids, vals, context)
+        self.paycode_duplication(cr, uid, ids, context)
+        return res
+    
+hr_time_rule()
 
 
 
@@ -347,3 +481,5 @@ class hr_class_mapping(osv.osv):
                 }
 
 hr_class_mapping()
+
+

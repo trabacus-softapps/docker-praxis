@@ -373,3 +373,102 @@ class resource_resource(osv.osv):
 resource_resource()
     
     
+class hr_punch(osv.osv):
+    _name = 'hr.punch'
+    _description = 'Hr Punch'
+    _columns = {
+                'punch_date'   : fields.date('Date'),
+                'start_time'   : fields.datetime('Start Time'),
+                'end_time'     : fields.datetime('End Time'),
+                'units'        : fields.float('Units'),
+                'notes'        : fields.text('Notes'),
+                'punch_timesheet_id' : fields.many2one('hr.emp.timesheet','Time sheet Punch'),
+                'daily_timesheet_id' : fields.many2one('hr.emp.timesheet','Daily Time sheet Punch')
+                }
+hr_punch()
+    
+class hr_daily_class(osv.osv):
+    _name = 'hr.daily.class'
+    _description = 'Hr Daily Classes'
+    _columns = {
+                'daily_date'       : fields.date('Date'),
+                'units'            : fields.float('Units'),
+                'notes'            : fields.text('Notes'),
+                'pay_code_id'      : fields.many2one('hr.pay.codes','Pay Code'),
+                'class_id1'        : fields.many2one('hr.class1','Class1'),
+                'class_id2'        : fields.many2one('hr.class2','Class2'),
+                'class_id3'        : fields.many2one('hr.class3','Class3'),
+                'class_id4'        : fields.many2one('hr.class4','Class4'),
+                'class_id5'        : fields.many2one('hr.class5','Class5'),
+                'class_id6'        : fields.many2one('hr.class6','Class6'),
+                'class_id7'        : fields.many2one('hr.class7','Class7'),
+                'class_id8'        : fields.many2one('hr.class8','Class8'),
+                'class_id9'        : fields.many2one('hr.class9','Class9'),
+                'class_id10'       : fields.many2one('hr.class10','Class10'),
+                'daily_timesheet_id' : fields.many2one('hr.emp.timesheet','Daily Time Sheets') 
+                }
+    
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        """
+            Add Dynamic Labels based on the class Mappings
+        """
+        mapping_obj = self.pool.get('hr.class.mapping')
+        if not context: context = {}
+        res = super(hr_daily_class, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' :
+            doc = etree.XML(res['arch'])
+            for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
+                nodes = doc.xpath("//field[@name='"+m.name[0:5]+'_id'+m.name[5:]+"']")
+                for node in nodes:
+                    node.set('invisible', '0')
+                    node.set('string', m.label)
+                    setup_modifiers(node, res['fields'][m.name[0:5]+'_id'+m.name[5:]])
+                     
+            res['arch'] = etree.tostring(doc)
+        return res
+    
+hr_daily_class()
+
+class hr_emp_timesheet(osv.osv):
+    _name = 'hr.emp.timesheet'
+    _description = 'Hr Employee Timesheets'
+    _columns= {
+               'employee_id' : fields.many2one('hr.employee','Employee'),
+               'period_start_dt' : fields.date('Period Start'),
+               'period_end_dt' : fields.date('Period End'),
+               'punch_ids' : fields.one2many('hr.punch', 'punch_timesheet_id', 'Punch'),
+               'daily_class_ids' : fields.one2many('hr.daily.class','daily_timesheet_id', 'Daily Class')
+               }
+
+    def onchange_employee_id(self, cr, uid, ids, employee_id, context=None):
+        res = {'period_start_dt' : False,
+                            'period_end_dt' : False}
+        emp_obj = self.pool.get('hr.employee')
+        if employee_id:
+            emp = emp_obj.browse(cr, uid, employee_id)
+            if emp.pay_group_id:
+                res.update({
+                            'period_start_dt' : emp.pay_group_id.period_start_dt,
+                            'period_end_dt' : emp.pay_group_id.period_end_dt
+                            })
+        return {'value':res}
+    
+    def create(self, cr, uid, vals, context=None):
+        if vals.get('employee_id'):
+            vals.update(self.onchange_employee_id(cr, uid, [], vals.get('employee_id'), context)['value'])
+            
+        res = super(hr_emp_timesheet, self).create(cr, uid, vals, context)
+        return res
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        if vals.get('employee_id'):
+            for case in self.browse(cr, uid, ids):
+                vals.update(self.onchange_employee_id(cr, uid, ids, vals.get('employee_id'), context)['value'])
+        res = super(hr_emp_timesheet, self).write(cr, uid, ids, vals, context)
+        return res
+            
+
+hr_emp_timesheet()
+     
+
+    

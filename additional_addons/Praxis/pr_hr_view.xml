@@ -192,6 +192,93 @@
                 </field>
             </field>
         </record>
+        
+        
+        <!--        ****************************************************************************************************
+                            HR Time Sheet Details
+        *****************************************************************************************************  -->
+        
+        <!--Timesheet form view -->
+        <record id="view_emp_timesheet_form" model="ir.ui.view">
+            <field name="name">pr.hr.emp.timesheet.form</field>
+            <field name="model">hr.emp.timesheet</field>
+            <field name="arch" type="xml">
+                <form string="Employee Timesheet">
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="employee_id" required = "1" on_change="onchange_employee_id(employee_id, context)"/><newline/>
+                            <field name="period_start_dt" readonly="1"/>
+                            <field name="period_end_dt" readonly="1"/>
+                        </group>
+                        <group>
+                            <notebook>
+                                <page string = "Punch">
+                                    <field name="punch_ids">
+                                        <tree editable="top">
+                                            <field name="punch_date"/>
+                                            <field name="start_time"/>
+                                            <field name="end_time"/>
+                                            <field name="units"/>
+                                            <field name="notes"/>
+                                        </tree>
+                                    </field>
+                                </page>
+                                
+                                <page string = "Daily">
+                                    <field name="daily_class_ids"/>
+                                </page>
+                               
+                            </notebook>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Shift Tree view -->
+        <record id="view_emp_timesheet_tree" model="ir.ui.view">
+            <field name="name">pr.hr.emp.timesheet.tree</field>
+            <field name="model">hr.emp.timesheet</field>
+            <field name="arch" type="xml">
+                <tree string="Employee Timesheet">
+                    <field name="employee_id" />
+                    <field name="period_start_dt"/>
+                    <field name="period_end_dt"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Shift Search view -->
+        <record id="view_emp_timesheet_search" model="ir.ui.view">
+            <field name="name">pr.hr.emp.timesheet.search</field>
+            <field name="model">hr.emp.timesheet</field>
+            <field name="arch" type="xml">
+                <search string="Employee Timesheet">
+                    <field name="employee_id"/>
+                    <field name="period_start_dt"/>
+                    <field name="period_end_dt"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_emp_timesheet_action" model="ir.actions.act_window">
+            <field name="name">Timesheet</field>
+            <field name="res_model">hr.emp.timesheet</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Time Sheet.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem  id="praxis_timesheet_root_menu" sequence="91" name="Timesheet"/>
+        <menuitem  id="praxis_timesheet_submenu" name="TImesheet" parent="praxis_timesheet_root_menu"/>
+        <menuitem action="view_emp_timesheet_action" id="menu_emp_timesheet_id" sequence="11" parent="praxis_timesheet_submenu"/>
                 
         
     </data>

@@ -481,11 +481,11 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         <separator string="Rounding Rule"/>
                         <group col="3" colspan="1">
                             <field name="clock1" nolabel="1"/>
-                            <field name="type1" nolabel="1"/>
-                            <field name="hours1" nolabel="1"/>
+                            <field name="type1" nolabel="1" attrs="{'required':[('clock1','!=',False)]}"/>
+                            <field name="hours1" nolabel="1" attrs="{'required':[('clock1','!=',False)]}"/>
                             <field name="clock2" nolabel="1"/>
-                            <field name="type2" nolabel="1"/>
-                            <field name="hours2" nolabel="1"/>
+                            <field name="type2" nolabel="1" attrs="{'required':[('clock2','!=',False)]}"/>
+                            <field name="hours2" nolabel="1" attrs="{'required':[('clock2','!=',False)]}"/>
                         </group>
                             
                     </sheet>
@@ -550,7 +550,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                             <field name="name" required="1"/>
                             <label for="lunch_hours"/>
                             <div>
-                                <field name="lunch_hours" class="oe_inline" nolabel="1"/> Minutes
+                                <field name="lunch_hours" class="oe_inline" nolabel="1" required="1"/> Minutes
                             </div>
                             <label for="after_work_hour"/>
                             <div>
@@ -559,7 +559,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                             <field name="automatic"/>
                             <field name="paid_by_employer"/>
                             <field name="post"/>
-                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}" attrs="{'required':[('post','=',True)]}"/>
                         </group>
                     </sheet>
                 </form>
@@ -633,11 +633,11 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         <group col="4" colspan="2">
                             <field name="code" required="1"/>
                             <field name="name" required="1"/>
-                            <field name="date"/>
-                            <field name="min_days_employed"/>
-                            <field name="hours"/>
-                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
-                            <field name="pay_holiday"/>
+                            <field name="date" required="1"/>
+                            <field name="min_days_employed" required="1"/>
+                            <field name="hours" required="1"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}" required="1"/>
+                            <field name="pay_holiday" required="1"/>
                             <field name="recurring"/>
                         </group>
                     </sheet>
@@ -697,6 +697,100 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
         </record>
         
         <menuitem action="view_emp_holiday_action" id="menu_emp_holiday_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Holiday Codes"/>
+        
+        
+        <!--        ****************************************************************************************************
+                                HR Employee Time Rule  Master
+            *****************************************************************************************************  -->
+        
+        <!--Employee form view -->
+        <record id="view_time_rule_form" model="ir.ui.view">
+            <field name="name">pr.time.rule.form</field>
+            <field name="model">hr.time.rule</field>
+            <field name="arch" type="xml">
+                <form string="Time Rule">
+                  
+                    <sheet>
+                        <group col="4" colspan="2">
+                            <field name="code" required="1"/>
+                            <field name="name" required="1"/>
+                            <field name="work_hours"/>
+                            <field name="lunch_id" options="{'no_open':True, 'no_create':True}"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
+                        </group>
+                        <separator string="Time Sheet Settings"/>
+                        <group col="4" colspan="2">
+                            <field name="missing_punches"/>
+                            <field name="roundind_id"/>
+                        </group>
+                        <separator string="OT_Rule Settings"/>
+                        <group>
+                            <field name="ot_rule_line" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="work_hours"/>
+                                    <field name="paycode_id" options="{'no_open':True, 'no_create':True}" required="1"/>
+                                    <field name="weekday_ids" options="{'no_open':True, 'no_create':True}"  
+                                        widget="many2many_tags" required="1"/>
+                                </tree>
+                            </field>
+                        </group>
+                       
+                    </sheet>
+                </form>
+            </field>
+        </record>
+        
+        <!--Employee Tree view -->
+        <record id="view_time_rule_tree" model="ir.ui.view">
+            <field name="name">pr.time_rule.tree</field>
+            <field name="model">hr.time.rule</field>
+            <field name="arch" type="xml">
+                <tree string="Time Rule">
+                    <field name="code" />
+                    <field name="name"/>
+                    <field name="work_hours"/>
+                    <field name="lunch_id"/>
+                    <field name="paycode_id"/>
+                    <field name="missing_punches"/>
+                    <field name="roundind_id"/>
+                </tree>
+            </field>
+        </record>
+        
+        <!--Employee Search view -->
+        <record id="view_time_rule_search" model="ir.ui.view">
+            <field name="name">pr.time.rule.search</field>
+            <field name="model">hr.time.rule</field>
+            <field name="arch" type="xml">
+                <search string="Time Rule">
+                    <field name="code" />
+                    <field name="name"/>
+                    <field name="work_hours"/>
+                    <field name="lunch_id"/>
+                    <field name="paycode_id"/>
+                    <field name="missing_punches"/>
+                    <field name="roundind_id"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_time_rule_action" model="ir.actions.act_window">
+            <field name="name">Time Rule</field>
+            <field name="res_model">hr.time.rule</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new TIme Rule.
+                </p>
+            </field>
+        </record>
+        
+        <menuitem action="view_time_rule_action" id="menu_time_rule_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Time Rule"/>
+        
         
         
         
@@ -1391,11 +1485,11 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
        
        
     <!--        ****************************************************************************************************
-                            HR Class Details
+                            HR Shift Details
         *****************************************************************************************************  -->
        
         <!--Shift form view -->
-        <record id="view_shidt_form" model="ir.ui.view">
+        <record id="view_shift_form" model="ir.ui.view">
             <field name="name">pr.hr.shift.form</field>
             <field name="model">hr.shift</field>
             <field name="arch" type="xml">
@@ -1450,6 +1544,66 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
         </record>
         
         <menuitem action="view_shift_action" id="menu_shift_id" sequence="11" parent="hr.menu_hr_configuration_employees"/>
+        
+        
+        <!--        ****************************************************************************************************
+                            HR Daily Punch Details
+        *****************************************************************************************************  -->
+        
+        <!--Shift form view -->
+        <record id="view_daily_punch_class_tree" model="ir.ui.view">
+            <field name="name">pr.hr.daily.class.tree</field>
+            <field name="model">hr.daily.class</field>
+            <field name="arch" type="xml">
+                <tree string="Daily" editable="top">
+                    <field name="daily_date" required="1"/>
+                    <field name="pay_code_id" required="1"/>
+                    <field name="class_id1" invisible="1" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id2" invisible="1" domain="[('class_id','=',class_id1)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id3" invisible="1" domain="[('class_id','=',class_id2)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id4" invisible="1" domain="[('class_id','=',class_id3)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id5" invisible="1" domain="[('class_id','=',class_id4)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id6" invisible="1" domain="[('class_id','=',class_id5)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id7" invisible="1" domain="[('class_id','=',class_id6)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id8" invisible="1" domain="[('class_id','=',class_id7)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id9" invisible="1" domain="[('class_id','=',class_id8)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id10" invisible="1" domain="[('class_id','=',class_id9)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="units"/>
+                    <field name="notes"/>
+                </tree>
+            </field>
+        </record>
+        
+       
+        
+        <!--Shift Search view -->
+        <record id="view_daily_punch_class_search" model="ir.ui.view">
+            <field name="name">pr.hr.daily.class.search</field>
+            <field name="model">hr.daily.class</field>
+            <field name="arch" type="xml">
+                <search string="Daily">
+                    <field name="daily_date"/>
+                    <field name="pay_code_id"/>
+                    <field name="units"/>
+                    <field name="notes"/>
+                </search>
+            </field>
+        </record>
+        
+        <record id="view_daily_punch_class_action" model="ir.actions.act_window">
+            <field name="name">Daily</field>
+            <field name="res_model">hr.daily.class</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Daily Punch.
+                </p>
+            </field>
+        </record>
         
 
 
