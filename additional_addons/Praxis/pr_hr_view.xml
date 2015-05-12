@@ -152,6 +152,7 @@
                                 <field name="monthly_pay" on_change="onchange_payinfo('monthly',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="annual_pay" on_change="onchange_payinfo('annual',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="pay_group_id"/>
+                                <field name="time_rule_id"/>
                             </group>
                             
                             <group>
@@ -194,7 +195,7 @@
         </record>
         
         
-        <!--        ****************************************************************************************************
+        <!--****************************************************************************************************
                             HR Time Sheet Details
         *****************************************************************************************************  -->
         
@@ -204,32 +205,45 @@
             <field name="model">hr.emp.timesheet</field>
             <field name="arch" type="xml">
                 <form string="Employee Timesheet">
+                    <header>
+                        <button name="calculate_timesheet" string="Calculate" type="object" class="oe_highlight"/>
+                    </header>
                     <sheet>
                         <group col="4" colspan="2">
-                            <field name="employee_id" required = "1" on_change="onchange_employee_id(employee_id, context)"/><newline/>
+                            <field name="employee_id" required = "1" on_change="onchange_employee_id(employee_id, context)"/>
+                            <field name="emp_no" readonly="1"/>
                             <field name="period_start_dt" readonly="1"/>
                             <field name="period_end_dt" readonly="1"/>
                         </group>
-                        <group>
-                            <notebook>
-                                <page string = "Punch">
-                                    <field name="punch_ids">
-                                        <tree editable="top">
-                                            <field name="punch_date"/>
-                                            <field name="start_time"/>
-                                            <field name="end_time"/>
-                                            <field name="units"/>
-                                            <field name="notes"/>
-                                        </tree>
-                                    </field>
-                                </page>
-                                
-                                <page string = "Daily">
-                                    <field name="daily_class_ids"/>
-                                </page>
-                               
-                            </notebook>
-                        </group>
+                        <notebook>
+                            <page string = "Punch">
+                                <field name="punch_ids" context="{'default_type':'punch'}">
+                                    <tree editable="bottom">
+                                        <field name="punch_date" required="1" 
+                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
+                                               attrs="{'readonly':[('type','=','daily')]}" />
+                                        <field name="start_time" attrs="{'required':[('type','=','punch'),('end_time','=',False)], 'readonly':[('type','=','daily')]}" class="oe_highlight"
+                                               on_change="onchange_time(punch_date, start_time, end_time, context)"/>
+                                        <field name="end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"
+                                               on_change="onchange_time(punch_date, start_time, end_time, context)"/>
+                                        <field name="units" attrs="{'readonly':[('type','=','daily')]}"/>
+                                        <field name="notes" attrs="{'readonly':[('type','=','daily')]}"/>
+                                        <field name="type" invisible="1"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            
+                            <page string = "Daily">
+                                <field name="daily_ids"  nolabel="1" domain="[('type','=','daily')]" context="{'default_type':'daily', 'employee_id':employee_id}"/>
+                            </page>
+                            
+                        </notebook>
+                        <newline/>
+                        <notebook>
+                        <page string="Timesheet Summary">
+                            <field name="summary_ids" readonly="0" context="{'employee_id': employee_id, 'tree_view_ref': 'view_summary_class_tree'}" nolabel="1"/>
+                        </page>
+                        </notebook>
                     </sheet>
                 </form>
             </field>
@@ -242,6 +256,7 @@
             <field name="arch" type="xml">
                 <tree string="Employee Timesheet">
                     <field name="employee_id" />
+                    <field name="emp_no"/>
                     <field name="period_start_dt"/>
                     <field name="period_end_dt"/>
                 </tree>
@@ -255,6 +270,7 @@
             <field name="arch" type="xml">
                 <search string="Employee Timesheet">
                     <field name="employee_id"/>
+                    <field name="emp_no"/>
                     <field name="period_start_dt"/>
                     <field name="period_end_dt"/>
                 </search>
@@ -280,6 +296,29 @@
         <menuitem  id="praxis_timesheet_submenu" name="TImesheet" parent="praxis_timesheet_root_menu"/>
         <menuitem action="view_emp_timesheet_action" id="menu_emp_timesheet_id" sequence="11" parent="praxis_timesheet_submenu"/>
                 
+       
+        <!--****************************************************************************************************
+                            HR Holiday Details
+        *****************************************************************************************************  -->
         
+        <!-- Holidays: Allocation Request -->
+        <record model="ir.ui.view" id="pr_edit_holiday_new">
+            <field name="name">Leave Request</field>
+            <field name="model">hr.holidays</field>
+            <field name="inherit_id" ref="hr_holidays.edit_holiday_new"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group/group/field[@name='holiday_status_id']" position="after">
+                    <label for="paycode_id" string="Pay Code"/>
+                    <div>
+                        <group col="3" attrs="{'invisible': [('type', '=', 'add')]}">
+                            <field name="paycode_id" nolabel="1" class="oe_inline"/><label string="-" class="oe_inline"/>
+                            <field name="units" nolabel="1" class="oe_inline" placeholder="Units"/>
+                        </group>
+                    </div>
+                </xpath>
+            </field>
+        </record>
+       
+       
     </data>
 </openerp>

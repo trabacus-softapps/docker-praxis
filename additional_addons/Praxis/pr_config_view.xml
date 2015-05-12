@@ -1547,17 +1547,70 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
         
         
         <!--        ****************************************************************************************************
-                            HR Daily Punch Details
+                            HR Time sheet summary Details
         *****************************************************************************************************  -->
         
-        <!--Shift form view -->
-        <record id="view_daily_punch_class_tree" model="ir.ui.view">
-            <field name="name">pr.hr.daily.class.tree</field>
-            <field name="model">hr.daily.class</field>
+        
+        
+        <record id="view_summary_class_tree" model="ir.ui.view">
+            <field name="name">pr.timesheet.summary.tree</field>
+            <field name="model">timesheet.summary</field>
             <field name="arch" type="xml">
                 <tree string="Daily" editable="top">
                     <field name="daily_date" required="1"/>
-                    <field name="pay_code_id" required="1"/>
+                    <field name="paycode_id" required="1"/>
+                    <field name="units"/>
+                    <field name="class_id1" invisible="1" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id2" invisible="1" domain="[('class_id','=',class_id1)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id3" invisible="1" domain="[('class_id','=',class_id2)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id4" invisible="1" domain="[('class_id','=',class_id3)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id5" invisible="1" domain="[('class_id','=',class_id4)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id6" invisible="1" domain="[('class_id','=',class_id5)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id7" invisible="1" domain="[('class_id','=',class_id6)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id8" invisible="1" domain="[('class_id','=',class_id7)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id9" invisible="1" domain="[('class_id','=',class_id8)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="class_id10" invisible="1" domain="[('class_id','=',class_id9)]" options='{"no_open": True, "no_create": True}'/>
+                    <field name="notes"/>
+                </tree>
+            </field>
+        </record>
+        
+        
+        
+        <record id="view_summary_action" model="ir.actions.act_window">
+            <field name="name">Timesheet Summary</field>
+            <field name="res_model">timesheet.summary</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="context">{}</field>
+            <field name="view_id" eval="False"/>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">
+                    Click to add a new Time sheet summary.
+                </p>
+            </field>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="action_summary_tree">
+           
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_summary_class_tree"/>
+            <field name="act_window_id" ref="view_summary_action"/>
+        </record>
+        
+        
+    <!--        ****************************************************************************************************
+                        HR Daily Punch Details
+    *****************************************************************************************************  -->        
+        
+        <record id="view_punch_tree" model="ir.ui.view">
+            <field name="name">pr.hr.punch.tree</field>
+            <field name="model">hr.punch</field>
+            <field name="arch" type="xml">
+                <tree string="Daily" editable="top">
+                    <field name="punch_date" required="1"/>
+                    <field name="paycode_id" required="1"/>
                     <field name="class_id1" invisible="1" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id2" invisible="1" domain="[('class_id','=',class_id1)]" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id3" invisible="1" domain="[('class_id','=',class_id2)]" options='{"no_open": True, "no_create": True}'/>
@@ -1570,39 +1623,46 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                     <field name="class_id10" invisible="1" domain="[('class_id','=',class_id9)]" options='{"no_open": True, "no_create": True}'/>
                     <field name="units"/>
                     <field name="notes"/>
+                    <field name="type" invisible="1"/>
                 </tree>
             </field>
         </record>
         
-       
         
-        <!--Shift Search view -->
-        <record id="view_daily_punch_class_search" model="ir.ui.view">
-            <field name="name">pr.hr.daily.class.search</field>
-            <field name="model">hr.daily.class</field>
+        
+        <record id="view_punch_search" model="ir.ui.view">
+            <field name="name">pr.hr.punch.search</field>
+            <field name="model">hr.punch</field>
             <field name="arch" type="xml">
                 <search string="Daily">
-                    <field name="daily_date"/>
-                    <field name="pay_code_id"/>
+                    <field name="punch_date"/>
+                    <field name="paycode_id"/>
                     <field name="units"/>
                     <field name="notes"/>
                 </search>
             </field>
         </record>
         
-        <record id="view_daily_punch_class_action" model="ir.actions.act_window">
+        <record id="view_daily_punch_action" model="ir.actions.act_window">
             <field name="name">Daily</field>
-            <field name="res_model">hr.daily.class</field>
+            <field name="res_model">hr.punch</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree,form</field>
             <field name="domain">[]</field>
-            <field name="context">{}</field>
+            <field name="context">{'default_type':'daily'}</field>
             <field name="view_id" eval="False"/>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">
                     Click to add a new Daily Punch.
                 </p>
             </field>
+        </record>
+        
+        <record model="ir.actions.act_window.view" id="action_daily_tree">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="view_punch_tree"/>
+            <field name="act_window_id" ref="view_daily_punch_action"/>
         </record>
         
 

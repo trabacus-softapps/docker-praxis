@@ -10,6 +10,7 @@
     """,
     # data files always loaded at installation
     'depends' :['base','hr','hr_holidays'],
+    'css'     :   ['static/src/css/praxis.css'],
     'data': [
              'pr_config_view.xml',
              'pr_hr_view.xml',

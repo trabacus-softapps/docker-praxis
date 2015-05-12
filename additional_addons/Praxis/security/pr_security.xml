@@ -28,7 +28,7 @@
             action="contacts.action_contacts"
             groups="base.group_system,base.group_partner_manager"/>
         
-        <menuitem name="Leaves" parent="hr.menu_hr_root" id="hr_holidays.menu_open_ask_holidays" sequence="20" groups="base.group_hr_manager,base.group_hr_user"/>
+        <menuitem name="Leaves" parent="hr.menu_hr_root" id="hr_holidays.menu_open_ask_holidays" sequence="20" groups="base.group_hr_manager,base.group_hr_user,Praxis.group_praxis_manager"/>
         
         <!-- Top menu item -->
         <menuitem name="Reporting"
@@ -54,6 +54,8 @@
             parent="hr.menu_hr_configuration_employees" sequence="1" groups="base.group_no_one,base.group_hr_manager,Praxis.group_praxis_manager"/>
         
         <menuitem action="hr.open_module_tree_department" id="hr.menu_hr_department_tree" parent="hr.menu_hr_configuration_employees" sequence="2" groups="base.group_hr_manager,base.group_hr_user,Praxis.group_praxis_manager"/>
+        
+        
         
         <menuitem name="Leave Types" action="hr_holidays.open_view_holiday_status" id="hr_holidays.menu_open_view_holiday_status" parent="hr.menu_hr_configuration_employees" sequence="4" groups="base.group_hr_manager,Praxis.group_praxis_manager"/>
         

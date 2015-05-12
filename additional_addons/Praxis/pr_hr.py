@@ -29,6 +29,9 @@ from openerp.tools.translate import _
 from lxml import etree
 from openerp.osv.orm import setup_modifiers
 import re
+from datetime import datetime
+from dateutil import parser
+import pytz
 
 _logger = logging.getLogger(__name__)
 
@@ -160,6 +163,7 @@ class hr_employee(osv.osv):
                 'phone'            : fields.char('Phone'),
                 'mobile'           : fields.char('Mobile'),
                 'display_name'     : fields.function(_display_name, type='char', string='Name', select=True),
+                'time_rule_id'     : fields.many2one('hr.time.rule','Time Rule')
                   
                 }
     _defaults = {
@@ -376,37 +380,31 @@ resource_resource()
 class hr_punch(osv.osv):
     _name = 'hr.punch'
     _description = 'Hr Punch'
-    _columns = {
-                'punch_date'   : fields.date('Date'),
-                'start_time'   : fields.datetime('Start Time'),
-                'end_time'     : fields.datetime('End Time'),
-                'units'        : fields.float('Units'),
-                'notes'        : fields.text('Notes'),
-                'punch_timesheet_id' : fields.many2one('hr.emp.timesheet','Time sheet Punch'),
-                'daily_timesheet_id' : fields.many2one('hr.emp.timesheet','Daily Time sheet Punch')
-                }
-hr_punch()
+    _order = 'punch_date , start_time'
     
-class hr_daily_class(osv.osv):
-    _name = 'hr.daily.class'
-    _description = 'Hr Daily Classes'
-    _columns = {
-                'daily_date'       : fields.date('Date'),
-                'units'            : fields.float('Units'),
-                'notes'            : fields.text('Notes'),
-                'pay_code_id'      : fields.many2one('hr.pay.codes','Pay Code'),
-                'class_id1'        : fields.many2one('hr.class1','Class1'),
-                'class_id2'        : fields.many2one('hr.class2','Class2'),
-                'class_id3'        : fields.many2one('hr.class3','Class3'),
-                'class_id4'        : fields.many2one('hr.class4','Class4'),
-                'class_id5'        : fields.many2one('hr.class5','Class5'),
-                'class_id6'        : fields.many2one('hr.class6','Class6'),
-                'class_id7'        : fields.many2one('hr.class7','Class7'),
-                'class_id8'        : fields.many2one('hr.class8','Class8'),
-                'class_id9'        : fields.many2one('hr.class9','Class9'),
-                'class_id10'       : fields.many2one('hr.class10','Class10'),
-                'daily_timesheet_id' : fields.many2one('hr.emp.timesheet','Daily Time Sheets') 
-                }
+    
+     #inheritted
+    # to update the class details of employee
+    def default_get(self, cr, uid, fields, context=None):
+        emp_obj = self.pool.get('hr.employee')
+        context = dict(context or {})
+        res = super(hr_punch, self).default_get(cr, uid, fields, context=context)
+        
+        if context.get('employee_id'):
+            emp = emp_obj.browse(cr, uid, context.get('employee_id'))
+            res.update({
+                           'class_id1' : emp.class_id1 and emp.class_id1.id or False,
+                           'class_id2' : emp.class_id2 and emp.class_id2.id or False,
+                           'class_id3' : emp.class_id3 and emp.class_id3.id or False,
+                           'class_id4' :  emp.class_id4 and emp.class_id4.id or False,
+                           'class_id5' : emp.class_id5 and emp.class_id5.id or False,
+                           'class_id6' : emp.class_id6 and emp.class_id6.id or False,
+                           'class_id7' : emp.class_id7 and emp.class_id7.id or False,
+                           'class_id8' : emp.class_id8 and emp.class_id8.id or False,
+                           'class_id9' : emp.class_id9 and emp.class_id9.id or False,
+                           'class_id10' : emp.class_id10 and emp.class_id10.id or False,
+                        })
+        return res
     
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
         """
@@ -414,7 +412,7 @@ class hr_daily_class(osv.osv):
         """
         mapping_obj = self.pool.get('hr.class.mapping')
         if not context: context = {}
-        res = super(hr_daily_class, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        res = super(hr_punch, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
         if view_type == 'tree' :
             doc = etree.XML(res['arch'])
             for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
@@ -427,7 +425,160 @@ class hr_daily_class(osv.osv):
             res['arch'] = etree.tostring(doc)
         return res
     
-hr_daily_class()
+    
+    _columns = {
+                'punch_date'   : fields.date('Date'),
+                'start_time'   : fields.datetime('Start Time'),
+                'end_time'     : fields.datetime('End Time'),
+                'units'        : fields.float('Units'),
+                'notes'        : fields.text('Notes'),
+                'paycode_id'       : fields.many2one('hr.pay.codes','Pay Code'),
+                'class_id1'        : fields.many2one('hr.class1','Class1'),
+                'class_id2'        : fields.many2one('hr.class2','Class2'),
+                'class_id3'        : fields.many2one('hr.class3','Class3'),
+                'class_id4'        : fields.many2one('hr.class4','Class4'),
+                'class_id5'        : fields.many2one('hr.class5','Class5'),
+                'class_id6'        : fields.many2one('hr.class6','Class6'),
+                'class_id7'        : fields.many2one('hr.class7','Class7'),
+                'class_id8'        : fields.many2one('hr.class8','Class8'),
+                'class_id9'        : fields.many2one('hr.class9','Class9'),
+                'class_id10'       : fields.many2one('hr.class10','Class10'),
+                'timesheet_id' : fields.many2one('hr.emp.timesheet','Time sheet Punch'),
+                'type' : fields.selection([('daily','Daily'),('punch','Punch')], 'Type')
+                }
+    
+    def onchange_date(self, cr, uid, ids, punch_date, period_start_dt, period_end_dt, context=None):
+        res = {}
+        warning = ''
+        if not period_start_dt and not period_end_date:
+            raise osv.except_osv(_('Warning!'), _('Please enter the period start and end dates'))
+        
+        if punch_date and period_start_dt and period_end_dt:
+            if period_start_dt <= punch_date <= period_end_dt:
+                print 12
+            else:
+                warning = {
+                              'title'   : _('Warning!'),
+                              'message' : _('date  "'+ punch_date + '"  not in the between "'+ period_start_dt + '" and "'+ period_end_dt + '"')
+                          }
+                res.update({
+                             'punch_date' : False
+                            })
+                
+        return {'value' : res, 'warning' : warning }
+    
+    def onchange_time(self, cr, uid, ids, punch_date, start_time, end_time, context=None):
+        res = {}
+        warning = ''
+        
+        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        local_tz = pytz.timezone(zone)
+        
+        if (start_time or end_time) and not punch_date:
+            raise osv.except_osv(_('Warning!'), _('Please enter the date.'))
+        
+        if punch_date and start_time:
+            
+            punch_time = datetime.strptime(punch_date, '%Y-%m-%d')
+            punch_time = punch_time.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                
+            start_date = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+            start_date = start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+            
+#             punch_date =(parser.parse(''.join((re.compile('\d')).findall(punch_date)))).strftime('%Y-%m-%d')
+#             start_date =(parser.parse(''.join((re.compile('\d')).findall(start_time)))).strftime('%Y-%m-%d')
+            
+            print "punch time", punch_time,punch_date , start_time
+            if punch_time.date() != start_date.date():
+                warning = {
+                              'title'   : _('Warning!'),
+                              'message' : _('Please select the valid time')
+                          }
+                res.update({ 'start_time' : False })
+                
+        if punch_date and end_time:
+            punch_date = datetime.strptime(punch_date, '%Y-%m-%d')
+            punch_time = punch_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                
+            end_date = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+            end_date = end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+#             punch_date =(parser.parse(''.join((re.compile('\d')).findall(punch_date)))).strftime('%Y-%m-%d')
+#             end_date =(parser.parse(''.join((re.compile('\d')).findall(end_time)))).strftime('%Y-%m-%d')
+            if punch_date.date() != end_date.date():
+                warning = {
+                              'title'   : _('Warning!'),
+                              'message' : _('Please select the valid time')
+                          }
+                res.update({ 'end_time' : False })
+                
+        if end_time and start_time:
+            
+            st_dt = datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S')
+            start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                
+            end_dt = datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S')
+            end_time = end_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+            
+            diff = end_time - start_time
+            
+            if end_time < start_time:
+                warning = {
+                              'title'   : _('Warning!'),
+                              'message' : _('Please select the valid end time')
+                          }
+                res.update({ 'end_time' : False })
+            
+        
+        return {'value' : res, 'warning' : warning }
+             
+    
+hr_punch()
+    
+class timesheet_summary(osv.osv):
+    _name = 'timesheet.summary'
+    _description = 'Time Sheet Summary'
+    
+   
+    _columns = {
+                'daily_date'       : fields.date('Date'),
+                'units'            : fields.float('Units'),
+                'notes'            : fields.text('Notes'),
+                'paycode_id'       : fields.many2one('hr.pay.codes','Pay Code'),
+                'class_id1'        : fields.many2one('hr.class1','Class1'),
+                'class_id2'        : fields.many2one('hr.class2','Class2'),
+                'class_id3'        : fields.many2one('hr.class3','Class3'),
+                'class_id4'        : fields.many2one('hr.class4','Class4'),
+                'class_id5'        : fields.many2one('hr.class5','Class5'),
+                'class_id6'        : fields.many2one('hr.class6','Class6'),
+                'class_id7'        : fields.many2one('hr.class7','Class7'),
+                'class_id8'        : fields.many2one('hr.class8','Class8'),
+                'class_id9'        : fields.many2one('hr.class9','Class9'),
+                'class_id10'       : fields.many2one('hr.class10','Class10'),
+                'timesheet_id'     : fields.many2one('hr.emp.timesheet','Daily Time Sheets'),
+                
+                }
+    
+        
+    def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
+        """
+            Add Dynamic Labels based on the class Mappings
+        """
+        mapping_obj = self.pool.get('hr.class.mapping')
+        if not context: context = {}
+        res = super(timesheet_summary, self).fields_view_get(cr, uid, view_id=view_id, view_type=view_type, context=context, toolbar=toolbar, submenu=submenu)
+        if view_type == 'tree' :
+            doc = etree.XML(res['arch'])
+            for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
+                nodes = doc.xpath("//field[@name='"+m.name[0:5]+'_id'+m.name[5:]+"']")
+                for node in nodes:
+                    node.set('invisible', '0')
+                    node.set('string', m.label)
+                    setup_modifiers(node, res['fields'][m.name[0:5]+'_id'+m.name[5:]])
+                     
+            res['arch'] = etree.tostring(doc)
+        return res
+    
+timesheet_summary()
 
 class hr_emp_timesheet(osv.osv):
     _name = 'hr.emp.timesheet'
@@ -436,9 +587,33 @@ class hr_emp_timesheet(osv.osv):
                'employee_id' : fields.many2one('hr.employee','Employee'),
                'period_start_dt' : fields.date('Period Start'),
                'period_end_dt' : fields.date('Period End'),
-               'punch_ids' : fields.one2many('hr.punch', 'punch_timesheet_id', 'Punch'),
-               'daily_class_ids' : fields.one2many('hr.daily.class','daily_timesheet_id', 'Daily Class')
+               'punch_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch'),
+               'daily_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', domain=[('type','=','daily')]),
+               'summary_ids' : fields.one2many('timesheet.summary','timesheet_id', 'Summary'),
+               'emp_no' : fields.related('employee_id','identification_id', type='char', string='Employee Number')
                }
+    
+    def name_get(self, cr, uid, ids, context=None):
+        """ TO display the concatenated Period Dates (period_start_dt and period_end_dt) """
+        if not ids:
+            return []
+        reads = self.read(cr, uid, ids, ['emp_no','period_start_dt','period_end_dt'], context=context)
+        res = []
+        
+        for record in reads:
+            name = ''
+            
+            if record['period_start_dt']:
+                name = record['period_start_dt']
+            
+            if record['period_end_dt']:
+                name = name + ' - ' + record['period_end_dt']
+                
+            if not record['period_start_dt'] and not record['period_end_dt'] :
+                name = record['emp_no']
+            res.append((record['id'], name))
+        return res
+    
 
     def onchange_employee_id(self, cr, uid, ids, employee_id, context=None):
         res = {'period_start_dt' : False,
@@ -446,12 +621,110 @@ class hr_emp_timesheet(osv.osv):
         emp_obj = self.pool.get('hr.employee')
         if employee_id:
             emp = emp_obj.browse(cr, uid, employee_id)
+            if emp.identification_id:
+                res.update({ 'emp_no' : emp.identification_id })
+            
             if emp.pay_group_id:
                 res.update({
                             'period_start_dt' : emp.pay_group_id.period_start_dt,
                             'period_end_dt' : emp.pay_group_id.period_end_dt
                             })
         return {'value':res}
+    
+    def calculate_timesheet(self, cr, uid, ids, context=None):
+        
+        """ 
+        TO calculate time difference and consolidate the records 
+        
+        date difference :  diff = end_time - start_time
+        Hours" : (diff.seconds) / 3600
+        "Minutes" :((diff.seconds) / 60.0) 
+        "hours + minutes" : ((diff.seconds) / 60.0) / 60.0  
+        """
+        data = []
+        sum_obj = self.pool.get('timesheet.summary')
+        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        local_tz = pytz.timezone(zone)
+        punch_obj = self.pool.get('hr.punch')
+        lines = {}
+        
+        for case in self.browse(cr, uid, ids):
+            master_class = (
+                           case.employee_id.class_id1 and case.employee_id.class_id1.id or False,
+                           case.employee_id.class_id2 and case.employee_id.class_id2.id or False,
+                           case.employee_id.class_id3 and case.employee_id.class_id3.id or False,
+                           case.employee_id.class_id4 and case.employee_id.class_id4.id or False,
+                           case.employee_id.class_id5 and case.employee_id.class_id5.id or False,
+                           case.employee_id.class_id6 and case.employee_id.class_id6.id or False,
+                           case.employee_id.class_id7 and case.employee_id.class_id7.id or False,
+                           case.employee_id.class_id8 and case.employee_id.class_id8.id or False,
+                           case.employee_id.class_id9 and case.employee_id.class_id9.id or False,
+                           case.employee_id.class_id10 and case.employee_id.class_id10.id or False,
+                         )
+            
+            for p in case.punch_ids:
+                if p.type =='punch' :
+                    st_dt = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S')
+                    start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                    
+                    end_dt = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S')
+                    end_time = end_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                    diff = end_time - start_time
+                    
+                    # for updating the date difference
+                    punch_obj.write(cr, uid, [p.id], {'units':((diff.seconds) / 60.0) / 60.0 }, context)
+                    
+                    # for Punch records
+                    key = (p.units, case.employee_id.time_rule_id.paycode_id.id, master_class)
+                    if key in lines:
+                        lines[key].append(p.id)
+                    else:
+                        lines[key] = [p.id]
+                        
+                elif p.type =='daily' :
+                    master_class = (
+                               p.class_id1 and p.class_id1.id or False,
+                               p.class_id2 and p.class_id2.id or False,
+                               p.class_id3 and p.class_id3.id or False,
+                               p.class_id4 and p.class_id4.id or False,
+                               p.class_id5 and p.class_id5.id or False,
+                               p.class_id6 and p.class_id6.id or False,
+                               p.class_id7 and p.class_id7.id or False,
+                               p.class_id8 and p.class_id8.id or False,
+                               p.class_id9 and p.class_id9.id or False,
+                               p.class_id10 and p.class_id10.id or False,
+                             )
+                    key = (p.units, p.paycode_id.id, master_class)
+                    
+                    if key in lines:
+                        lines[key].append(p.id)
+                    else:
+                        lines[key] = [p.id]
+                    
+                    
+            for l in lines:
+                sum_lines = {
+                             'daily_date' : case.period_end_dt,
+                             'paycode_id' : l[1],
+                             'units' : l[0] * len( lines[l] ),
+                             'class_id1' :  l[2][0], 
+                             'class_id2' :  l[2][1], 
+                             'class_id3' :  l[2][2], 
+                             'class_id4' :  l[2][3], 
+                             'class_id5' :  l[2][4], 
+                             'class_id6' :  l[2][5], 
+                             'class_id7' :  l[2][6], 
+                             'class_id8' :  l[2][7], 
+                             'class_id9' :  l[2][8], 
+                             'class_id10':  l[2][9], 
+                             }
+                data.append((0,0, sum_lines))
+            # deleting the existing line and creating newline
+            summary_ids = sum_obj.search(cr, uid, [('timesheet_id','=', case.id)])
+            sum_obj.unlink(cr, uid, summary_ids, context=None) 
+            self.write(cr, uid, ids, {'summary_ids' : data}, context)
+        return True
+    
     
     def create(self, cr, uid, vals, context=None):
         if vals.get('employee_id'):
@@ -469,6 +742,58 @@ class hr_emp_timesheet(osv.osv):
             
 
 hr_emp_timesheet()
-     
+
+
+class hr_holidays(osv.osv):
+    _inherit = "hr.holidays"
+    _columns = {
+                'paycode_id' :  fields.many2one('hr.pay.codes','Pay Code'),
+                'units'      :  fields.float('Units') 
+                }
+    
+    #inheritted to update the leaves in timesheet
+    def holidays_confirm(self, cr, uid, ids, context=None):
+        res = super(hr_holidays, self).holidays_confirm(cr, uid, ids, context)
+        empSheet_obj = self.pool.get('hr.emp.timesheet')
+        punch_obj = self.pool.get('hr.punch')
+        for case in self.browse(cr, uid, ids):
+            if case.date_from:
+                cr.execute("select id from hr_emp_timesheet where '" + case.date_from +"'::date between period_start_dt and period_end_dt and employee_id = "+ str(case.employee_id and case.employee_id.id or 0))
+                sheet_ids = [x[0] for x in cr.fetchall()]
+    #             punch_ids = punch_obj.search(cr, uid, [('timesheet_id','in',sheet_ids)])
+    #             if punch_ids:
+    #                 punch_obj.write(cr, uid, punch_ids, {'units' : case.units, 
+    #                                                      'paycode_id': case.paycode_id and case.paycode_id.id or False,
+    #                                                      'daily_date' : case.date_from })
+                vals = {
+                       'units' : case.units, 
+                       'paycode_id': case.paycode_id and case.paycode_id.id or False,
+                       'punch_date' : case.date_from,
+                       'class_id1' : case.employee_id.class_id1 and case.employee_id.class_id1.id or False,
+                       'class_id2' : case.employee_id.class_id2 and case.employee_id.class_id2.id or False,
+                       'class_id3' : case.employee_id.class_id3 and case.employee_id.class_id3.id or False,
+                       'class_id4' : case.employee_id.class_id4 and case.employee_id.class_id4.id or False,
+                       'class_id5' : case.employee_id.class_id5 and case.employee_id.class_id5.id or False,
+                       'class_id6' : case.employee_id.class_id6 and case.employee_id.class_id6.id or False,
+                       'class_id7' : case.employee_id.class_id7 and case.employee_id.class_id7.id or False,
+                       'class_id8' : case.employee_id.class_id8 and case.employee_id.class_id8.id or False,
+                       'class_id9' : case.employee_id.class_id9 and case.employee_id.class_id9.id or False,
+                       'class_id10' : case.employee_id.class_id10 and case.employee_id.class_id10.id or False,
+                       'timesheet_id' : sheet_ids and sheet_ids[0] or False,
+                       'type' : 'daily',
+                       'notes' : 'Created from Leaves'
+                        }
+                print "Vals", vals
+                punch_obj.create(cr, uid, vals, context)
+        
+        return res
+        
+    #TODO : Refusing the holidays
+    def holidays_refuse(self, cr, uid, ids, context=None):
+        res = super(hr_holidays, self).holidays_refuse(cr, uid, ids, context)
+        
+        return res
+        
+hr_holidays()
 
     
