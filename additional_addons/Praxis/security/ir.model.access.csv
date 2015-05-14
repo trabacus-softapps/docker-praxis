@@ -46,3 +46,6 @@ manager_hr_punch,hr_punch,model_hr_punch,group_praxis_manager,1,1,1,1
 manager_hr_emp_timesheet,hr_emp_timesheet,model_hr_emp_timesheet,group_praxis_manager,1,1,1,1
 manager_timesheet_summary,timesheet_summary,model_timesheet_summary,group_praxis_manager,1,1,1,1
 manager_hr_holidays,hr_holidays,model_hr_holidays,group_praxis_manager,1,1,1,1
+,,,,,,,
+manager_report_time_analysis,report_time_analysis,model_report_time_analysis,group_praxis_manager,1,1,1,1
+manager_avg_work_hours,avg_work_hours,model_avg_work_hours,group_praxis_manager,1,1,1,1

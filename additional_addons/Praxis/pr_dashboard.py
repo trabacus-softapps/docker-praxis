@@ -45,14 +45,14 @@ class report_time_analysis(osv.osv):
                       punch_date
                     , id 
                     , timesheet_id
-                    , start_time at time zone 'UTC'
+                    , start_time at time zone 'UTC+5:30'
                     , start_time
-                    , end_time at time zone 'UTC' 
+                    , end_time at time zone 'UTC+5:30' 
                     , end_time
-                    , case when start_time at time zone 'UTC' between now()::date + time '08:00' and now()::date + time '09:00' then 1 else
-                      case when start_time at time zone 'UTC' between now()::date + time '09:00' and now()::date + time '09:30' then 2 else
-                      case when start_time at time zone 'UTC' between now()::date + time '09:30' and now()::date + time '10:00' then 3 else
-                      case when start_time at time zone 'UTC' between now()::date + time '10:00' and now()::date + time '11:00' then 4 else 5
+                    , case when start_time at time zone 'UTC+5:30' between now()::date + time '08:00' and now()::date + time '09:00' then 1 else
+                      case when start_time at time zone 'UTC+5:30' between now()::date + time '09:00' and now()::date + time '09:30' then 2 else
+                      case when start_time at time zone 'UTC+5:30' between now()::date + time '09:30' and now()::date + time '10:00' then 3 else
+                      case when start_time at time zone 'UTC+5:30' between now()::date + time '10:00' and now()::date + time '11:00' then 4 else 5
                       end end end end as measure
                 from hr_punch where punch_date = now()::date
                 order by measure
@@ -90,9 +90,9 @@ class avg_work_hours(osv.osv):
                       punch_date
                     , id 
                     , timesheet_id
-                    , start_time at time zone 'UTC'
+                    , start_time at time zone 'UTC+5:30'
                     , start_time
-                    , end_time at time zone 'UTC' 
+                    , end_time at time zone 'UTC+5:30 
                     , end_time
                     , case when (EXTRACT(EPOCH FROM end_time - start_time) / 3600) < 7 then 1 else
                       case when (EXTRACT(EPOCH FROM end_time - start_time) / 3600) between 7 and 8 then 2 else
