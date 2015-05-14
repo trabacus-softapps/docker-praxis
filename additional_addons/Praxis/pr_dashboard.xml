@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+
+        <record id="view_time_analysis_graph" model="ir.ui.view">
+            <field name="name">report.time.analysis.graph</field>
+            <field name="model">report.time.analysis</field>
+            <field name="arch" type="xml">
+                <graph string="In Time Analysis" type="pie">
+                    <field name="measure" type="measure"/>
+                    <field name="name" />
+                </graph>
+            </field>
+        </record>
+       <!-- <record id="view_time_analysis_tree" model="ir.ui.view">
+            <field name="name">report.time.analysis.tree</field>
+            <field name="model">report.time.analysis</field>
+            <field name="arch" type="xml">
+                <tree string="In Time Analysis">
+                    <field name="name"/>
+                    <field name="measure"/>
+                </tree>
+            </field>
+        </record>-->
+       <!-- <record id="view_time_analysis_form" model="ir.ui.view">
+            <field name="name">report.time.analysis.form</field>
+            <field name="model">report.time.analysis</field>
+            <field name="arch" type="xml">
+                <form string="In Time Analysis">
+                    <group>
+                        <field name="name"/>
+                        <field name="measure"/>
+                    </group>
+                </form>
+            </field>
+        </record>-->
+        
+        <record id="action_time_analysis_graph" model="ir.actions.act_window">
+            <field name="name">In Time Analysis</field>
+            <field name="res_model">report.time.analysis</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph</field>
+        </record>
+        
+        
+        
+        <!--        Dash Boards     
+        <record id="pr_time_board_form" model="ir.ui.view">
+            <field name="name">time.board.form</field>
+            <field name="model">board.board</field>
+            <field name="arch" type="xml">
+                <form version="7.0" string="In Time Analysis">
+                    <board style="1">
+                        <column>
+                            <action name="%(action_time_analysis_graph)d" string="In Time Analysis"/>
+                        </column>
+                        
+                    </board>
+                </form>
+            </field>
+        </record>
+        
+        <record id="pr_action_time_board" model="ir.actions.act_window">
+            <field name="name">In Time Analysis</field>
+            <field name="res_model">board.board</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">form</field>
+            <field name="usage">menu</field>
+            <field name="view_id" ref="pr_time_board_form"/>
+        </record> 
+        
+        <menuitem id="action_pr_time_board_id"
+            sequence="99"
+            parent="hr.menu_hr_reporting"
+            action="pr_action_time_board"/>-->
+       
+        <menuitem id="action_pr_time_board_id1"
+            sequence="100"
+            parent="hr.menu_hr_reporting"
+            action="action_time_analysis_graph"/>
+        
+<!--        **************************************************************************************************
+                        Average Work Analysis
+        ******************************************************************************************************-->
+        <record id="view_avg_work_graph" model="ir.ui.view">
+            <field name="name">avg.work.analysis.graph</field>
+            <field name="model">avg.work.hours</field>
+            <field name="arch" type="xml">
+                <graph string="Average Work Hours" type="pie">
+                    <field name="measure" type="measure"/>
+                    <field name="name" />
+                </graph>
+            </field>
+        </record>
+        
+        <record id="avg_work_time_analysis_action" model="ir.actions.act_window">
+            <field name="name">Average Work Hours</field>
+            <field name="res_model">avg.work.hours</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">graph</field>
+        </record>
+        
+        <menuitem id="action_pr_avg_work_time_id"
+            sequence="101"
+            parent="hr.menu_hr_reporting"
+            action="avg_work_time_analysis_action"/>
+        
+    </data>
+</openerp>
