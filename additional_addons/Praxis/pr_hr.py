@@ -783,15 +783,21 @@ class hr_holidays(osv.osv):
                        'type' : 'daily',
                        'notes' : 'Created from Leaves'
                         }
-                print "Vals", vals
                 punch_obj.create(cr, uid, vals, context)
         
         return res
         
     #TODO : Refusing the holidays
     def holidays_refuse(self, cr, uid, ids, context=None):
+        punch_obj = self.pool.get('hr.punch')
         res = super(hr_holidays, self).holidays_refuse(cr, uid, ids, context)
-        
+        for case in self.browse(cr, uid, ids):
+            if case.date_from:
+                cr.execute("select id from hr_emp_timesheet where '" + case.date_from +"'::date between period_start_dt and period_end_dt and employee_id = "+ str(case.employee_id and case.employee_id.id or 0))
+                sheet_ids = [x[0] for x in cr.fetchall()]
+                cr.execute("select id from hr_punch where punch_date ='" + case.date_from + "'::date and timesheet_id in %s",(tuple(sheet_ids),))
+                punch_ids = [x[0] for x in cr.fetchall()]
+                punch_obj.unlink(cr, uid, punch_ids, context)
         return res
         
 hr_holidays()

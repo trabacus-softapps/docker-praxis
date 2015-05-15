@@ -71,9 +71,9 @@
             <field name="model">report.employee.attendance</field>
             <field name="arch" type="xml">
                 <graph string="Employee Attendance" type="bar">
-                    <field name="tot_emp" type="measure"/>
-                    <field name="measure" type="row"/>
-                    <field name="name" type="col"/>
+                   <!-- <field name="tot_emp" type="col"/>-->
+                    <field name="measure" type="measure"/>
+                    <field name="name"/>
                 </graph>
             </field>
         </record>
@@ -102,8 +102,10 @@
                     <board style="1-1">
                         <column>
                             <action name="%(action_time_analysis_graph)d" string="In Time Analysis"/>
-                            <action name="%(avg_work_time_analysis_action)d" string="Average Work Hours"/>
                             <action name="%(attendance_analysis_action)d" string="Employee Attendance"/>
+                        </column>
+                        <column>
+                            <action name="%(avg_work_time_analysis_action)d" string="Average Work Hours"/>
                         </column>
                     </board>
                 </form>

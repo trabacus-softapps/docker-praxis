@@ -125,19 +125,26 @@ class report_employee_attendance(osv.osv):
                  select * from 
                 (
                     select 
-                        min(id) as id 
-                        , count(id) as measure 
-                        , 'Present' as name 
-                        ,(select count(id) as tot_count from hr_employee) as tot_emp
+                        min(id) as id, 
+                        count(id)::int as measure, 
+                        'Present' as name 
+                        ,(select count(id)::int as tot_count from hr_employee)
                         from hr_punch where punch_date = now()::date and type = 'punch'
                     union
                     select 
-                        min(id) as id 
-                        , count(id) as measure
+                        min(id) as id, count(id)::int as measure  
                         , 'On Leave' as name 
-                        ,(select count(id) as tot_count from hr_employee) as tot_emp
+                        ,(select count(id)::int as tot_count from hr_employee)
                         from hr_punch where punch_date = now()::date and type = 'daily'
+                    union
+                    select 
+                        min(id) as id, count(id)::int as measure 
+                        , 'Total' as name 
+                        , count(id)::integer as tot_count
+                        from hr_employee
+                    
                 )a
+
 
         )""")
     
