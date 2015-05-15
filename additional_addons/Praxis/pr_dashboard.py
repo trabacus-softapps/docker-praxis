@@ -26,7 +26,7 @@ class report_time_analysis(osv.osv):
         'measure':fields.integer('Measure', readonly=True),
        
     }
-    _order = 'name desc'
+    _order = 'name'
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'report_time_analysis')
@@ -73,7 +73,7 @@ class avg_work_hours(osv.osv):
         'measure':fields.integer('Measure', readonly=True),
        
     }
-    _order = 'name desc'
+    _order = 'name'
 
     def init(self, cr):
         tools.drop_view_if_exists(cr, 'avg_work_hours')
@@ -92,7 +92,7 @@ class avg_work_hours(osv.osv):
                     , timesheet_id
                     , start_time at time zone 'UTC+5:30'
                     , start_time
-                    , end_time at time zone 'UTC+5:30 
+                    , end_time at time zone 'UTC+5:30' 
                     , end_time
                     , case when (EXTRACT(EPOCH FROM end_time - start_time) / 3600) < 7 then 1 else
                       case when (EXTRACT(EPOCH FROM end_time - start_time) / 3600) between 7 and 8 then 2 else
@@ -105,3 +105,39 @@ class avg_work_hours(osv.osv):
             group by a.measure , name
         )""")
         
+
+class report_employee_attendance(osv.osv):
+    _name = 'report.employee.attendance'
+    _description = "Average Work Hours"
+    _auto = False
+    _columns = {
+        'measure':fields.integer('Measure', readonly=True),
+        'name': fields.char('Name'),
+        'tot_emp' : fields.integer('Employee Number')
+        
+       
+    }
+
+    def init(self, cr):
+        tools.drop_view_if_exists(cr, 'report_employee_attendance')
+        cr.execute("""
+            create or replace view report_employee_attendance as (
+                 select * from 
+                (
+                    select 
+                        min(id) as id 
+                        , count(id) as measure 
+                        , 'Present' as name 
+                        ,(select count(id) as tot_count from hr_employee) as tot_emp
+                        from hr_punch where punch_date = now()::date and type = 'punch'
+                    union
+                    select 
+                        min(id) as id 
+                        , count(id) as measure
+                        , 'On Leave' as name 
+                        ,(select count(id) as tot_count from hr_employee) as tot_emp
+                        from hr_punch where punch_date = now()::date and type = 'daily'
+                )a
+
+        )""")
+    
