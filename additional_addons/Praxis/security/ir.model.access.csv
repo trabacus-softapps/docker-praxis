@@ -49,3 +49,4 @@ manager_hr_holidays,hr_holidays,model_hr_holidays,group_praxis_manager,1,1,1,1
 ,,,,,,,
 manager_report_time_analysis,report_time_analysis,model_report_time_analysis,group_praxis_manager,1,1,1,1
 manager_avg_work_hours,avg_work_hours,model_avg_work_hours,group_praxis_manager,1,1,1,1
+manager_report_employee_attendance,report_employee_attendance,model_report_employee_attendance,group_praxis_manager,1,1,1,1

@@ -179,8 +179,8 @@ class hr_rounding(osv.osv):
                                                    ('round_near','Round Nearest')],'Type1'),
                 'type2'        : fields.selection([('round_forward','Round Forward'),('round_back','Round Back'),
                                                    ('round_near','Round Nearest')],'Type2'),
-                'hours1'       : fields.char('Hours1'),
-                'hours2'       : fields.char('Hours1'),
+                'hours1'       : fields.integer('Hours1'),
+                'hours2'       : fields.integer('Hours1'),
                 }
     _defaults = {
                  'clock1'  : 'clock_in',
@@ -303,9 +303,9 @@ class hr_time_rule(osv.osv):
                 'work_hours' : fields.float('Work Hours Per Day'),
                 'lunch_id'   : fields.many2one('hr.lunch','Meal Break'),
                 'paycode_id' : fields.many2one('hr.pay.codes','Pay Code'),
-                'missing_punches' : fields.selection([('unpost','Do Not Post Missing Post'),
+                'missing_punches' : fields.selection([('unpost','Do Not Post Missing Punch'),
                                                       ('post','Post Missing Punch'),('dntcalc','Do Not Calculate Missing Punch')],'Missing Punches'),
-                'roundind_id'   : fields.many2one('hr.rounding','Rounding'),
+                'rounding_id'   : fields.many2one('hr.rounding','Rounding'),
                 'ot_rule_line'     : fields.one2many('hr.ot.rule','rule_id','Ot Rule')
                 
                 }

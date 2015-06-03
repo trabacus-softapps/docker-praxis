@@ -152,7 +152,7 @@
                                 <field name="monthly_pay" on_change="onchange_payinfo('monthly',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="annual_pay" on_change="onchange_payinfo('annual',unit_pay_rate, days_payable, monthly_pay, annual_pay)"/>
                                 <field name="pay_group_id"/>
-                                <field name="time_rule_id"/>
+                                <field name="time_rule_id" required="1"/>
                             </group>
                             
                             <group>
@@ -218,7 +218,7 @@
                         <notebook>
                             <page string = "Punch">
                                 <field name="punch_ids" context="{'default_type':'punch'}">
-                                    <tree editable="bottom">
+                                    <tree editable="top">
                                         <field name="punch_date" required="1" attrs="{'readonly':[('type','=','daily')]}" />
 <!--                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
 -->                                               
@@ -227,9 +227,20 @@
                                         <field name="end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"/>
 <!--                                               on_change="onchange_time(punch_date, start_time, end_time, context)"-->
                                         <field name="units" attrs="{'readonly':[('type','=','daily')]}"/>
+                                        <field name="paid_hrs" attrs="{'readonly':[('type','=','daily')]}"/>
                                         <field name="notes" attrs="{'readonly':[('type','=','daily')]}"/>
+<!--                                        <field name="check" widget="toggle_button"/>-->
                                         <field name="type" invisible="1"/>
                                     </tree>
+                                    <form>
+                                        <group>
+                                            <field name="punch_date"/>
+                                            <field name="start_time"/>
+                                            <field name="end_time"/>
+                                            <field name="units"/>
+                                            <field name="notes"/>
+                                        </group>
+                                    </form>
                                 </field>
                             </page>
                             

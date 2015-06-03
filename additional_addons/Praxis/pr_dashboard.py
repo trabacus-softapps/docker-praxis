@@ -108,7 +108,7 @@ class avg_work_hours(osv.osv):
 
 class report_employee_attendance(osv.osv):
     _name = 'report.employee.attendance'
-    _description = "Average Work Hours"
+    _description = "Employee Attendance"
     _auto = False
     _columns = {
         'measure':fields.integer('Measure', readonly=True),

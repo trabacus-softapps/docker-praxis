@@ -32,6 +32,8 @@ import re
 from datetime import datetime
 from dateutil import parser
 import pytz
+from dateutil.relativedelta import relativedelta
+
 
 _logger = logging.getLogger(__name__)
 
@@ -432,6 +434,7 @@ class hr_punch(osv.osv):
                 'end_time'     : fields.datetime('End Time'),
                 'units'        : fields.float('Units'),
                 'notes'        : fields.text('Notes'),
+                'paid_hrs'     : fields.float('Paid Units'),
                 'paycode_id'       : fields.many2one('hr.pay.codes','Pay Code'),
                 'class_id1'        : fields.many2one('hr.class1','Class1'),
                 'class_id2'        : fields.many2one('hr.class2','Class2'),
@@ -444,7 +447,8 @@ class hr_punch(osv.osv):
                 'class_id9'        : fields.many2one('hr.class9','Class9'),
                 'class_id10'       : fields.many2one('hr.class10','Class10'),
                 'timesheet_id' : fields.many2one('hr.emp.timesheet','Time sheet Punch'),
-                'type' : fields.selection([('daily','Daily'),('punch','Punch')], 'Type')
+                'type' : fields.selection([('daily','Daily'),('punch','Punch')], 'Type'),
+                'check' : fields.boolean('Check'),
                 }
     
     def onchange_date(self, cr, uid, ids, punch_date, period_start_dt, period_end_dt, context=None):
@@ -631,6 +635,84 @@ class hr_emp_timesheet(osv.osv):
                             })
         return {'value':res}
     
+    
+    def gettime(self, cr, uid, dates, rounding, minutes, context=None):
+        """ to calculate the time round based on conditions and the minutes 
+        round forward with 15 mins   :  9:05  -> 9:15
+        round backward  with 15 mins :  9:05 ->  9:00
+        round near with 15 mins      :  9:07 -> 9:00 and 9:08 -> 9:15
+        @time : start or end time
+        @rounding is the type
+        @return datetime
+        """
+        context = dict(context or {})
+        res = False
+        
+        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        local_tz = pytz.timezone(zone)
+        
+        dates = datetime.strptime(dates, '%Y-%m-%d %H:%M:%S')
+        #dates = dates.replace(tzinfo=pytz.utc).astimezone(local_tz)
+        print "initial dates", dates
+        
+        if rounding == 'round_forward' :
+            dates = dates + relativedelta(minutes = minutes)
+            interval = (dates.minute / minutes) * minutes
+            dates = dates.replace(minute = interval)
+            return dates
+        
+        
+        elif rounding == 'round_back':
+            interval = (dates.minute / minutes) * minutes
+            dates = dates.replace(minute = interval)
+            return dates
+        
+        else:
+            interval = dates.minute / minutes
+            rem = dates.minute % minutes
+        
+            if rem <= ( minutes / 2 ):
+                interval = interval * minutes
+            else:
+                interval = (interval * minutes) + minutes
+           
+            dates = dates.replace(minute = 0)
+            dates = dates + relativedelta(minutes = interval)
+            return dates
+        
+        return res
+    
+    
+    def time_rounding(self, cr, uid, ids, punch_id, context=None):
+        """ TO calculate time rounding of time sheet"""
+        punch_obj = self.pool.get('hr.punch')
+        vals = {}
+        
+        for case in self.browse(cr, uid, ids):
+            if punch_id:
+                if punch_id.start_time and case.employee_id.time_rule_id.rounding_id :
+                    if case.employee_id.time_rule_id.rounding_id.clock1:
+                        round_id = case.employee_id.time_rule_id.rounding_id
+                        
+                        start_time = self.gettime(cr, uid, punch_id.start_time, round_id.type1, 
+                                                  round_id.hours1, context=context)
+                        if start_time:
+                            vals.update({'start_time' : start_time})
+                
+                if punch_id.end_time and case.employee_id.time_rule_id.rounding_id :
+                    if case.employee_id.time_rule_id.rounding_id.clock2:
+                        round_id = case.employee_id.time_rule_id.rounding_id
+                        
+                        end_time = self.gettime(cr, uid, punch_id.end_time, round_id.type2, 
+                                                  round_id.hours2, context=context)
+                        if end_time:
+                            vals.update({'end_time' : end_time})
+                
+                punch_obj.write(cr, uid, [punch_id.id], vals, context)
+                 
+        
+        return True
+    
     def calculate_timesheet(self, cr, uid, ids, context=None):
         
         """ 
@@ -647,8 +729,10 @@ class hr_emp_timesheet(osv.osv):
         local_tz = pytz.timezone(zone)
         punch_obj = self.pool.get('hr.punch')
         lines = {}
+        lunch_hrs = 0.0
         
         for case in self.browse(cr, uid, ids):
+            vals = {}
             master_class = (
                            case.employee_id.class_id1 and case.employee_id.class_id1.id or False,
                            case.employee_id.class_id2 and case.employee_id.class_id2.id or False,
@@ -664,6 +748,27 @@ class hr_emp_timesheet(osv.osv):
             
             for p in case.punch_ids:
                 if p.type =='punch' :
+                    if case.employee_id.time_rule_id and case.employee_id.time_rule_id.missing_punches in ('unpost','dntcalc'):
+                        if not p.start_time or not p.end_time:
+                            continue
+                    
+                    # if post missing entries add or deduct the work hours for missing start or end dates
+                    if case.employee_id.time_rule_id and case.employee_id.time_rule_id.missing_punches == 'post':
+                        if not p.start_time and not p.end_time:
+                            continue
+                        
+                        elif p.start_time and not p.end_time:
+                            end_time = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S') + relativedelta(hours = case.employee_id.time_rule_id.work_hours)
+                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time})
+                        
+                        elif p.end_time and not p.start_time:
+                            start_time = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S') - relativedelta(hours = case.employee_id.time_rule_id.work_hours)
+                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time})
+                            
+                            
+                    # to  get the time rounding
+                    self.time_rounding(cr, uid, ids, p, context)
+                        
                     st_dt = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S')
                     start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
                     
@@ -671,15 +776,42 @@ class hr_emp_timesheet(osv.osv):
                     end_time = end_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
                     diff = end_time - start_time
                     
-                    # for updating the date difference
-                    punch_obj.write(cr, uid, [p.id], {'units':((diff.seconds) / 60.0) / 60.0 }, context)
+                    
+                    # to check the lunch hours for employee
+                    if case.employee_id.time_rule_id and case.employee_id.time_rule_id.lunch_id :
+                        if case.employee_id.time_rule_id.lunch_id.paid_by_employer :
+                            lunch_hrs =  case.employee_id.time_rule_id.lunch_id.lunch_hours / 100.0
+                            units = ((diff.seconds) / 60.0) / 60.0
+                            vals.update({'units': units, 'paid_hrs' : lunch_hrs})
+                            
+                        
+                        else:
+                            lunch_hrs =  case.employee_id.time_rule_id.lunch_id.lunch_hours / 100.0
+                            units = (((diff.seconds) / 60.0) / 60.0) - lunch_hrs
+                            vals.update({'units': units, 'paid_hrs' : 0.0})
+                            
+                    
+                    else:
+                        units = ((diff.seconds) / 60.0) / 60.0
+                        vals.update({'units': units, 'paid_hrs' : 0.0}) 
+                                        
+                    # for updating the Units
+                    punch_obj.write(cr, uid, [p.id], vals, context)
                     
                     # for Punch records
-                    key = (p.units, case.employee_id.time_rule_id.paycode_id.id, master_class)
+                    key = (units, case.employee_id.time_rule_id.paycode_id.id, master_class)
                     if key in lines:
                         lines[key].append(p.id)
                     else:
                         lines[key] = [p.id]
+                        
+                    # to check if there is lunch hours
+                    if lunch_hrs:
+                        key = (lunch_hrs, case.employee_id.time_rule_id.lunch_id.paycode_id.id, master_class)
+                        if key in lines:
+                            lines[key].append(p.id)
+                        else:
+                            lines[key] = [p.id]
                         
                 elif p.type =='daily' :
                     master_class = (
@@ -706,7 +838,7 @@ class hr_emp_timesheet(osv.osv):
                 sum_lines = {
                              'daily_date' : case.period_end_dt,
                              'paycode_id' : l[1],
-                             'units' : l[0] * len( lines[l] ),
+                             'units'      : l[0] * len( lines[l] ),
                              'class_id1' :  l[2][0], 
                              'class_id2' :  l[2][1], 
                              'class_id3' :  l[2][2], 
@@ -734,9 +866,20 @@ class hr_emp_timesheet(osv.osv):
         return res
     
     def write(self, cr, uid, ids, vals, context=None):
+        print "Vals....", vals
         if vals.get('employee_id'):
             for case in self.browse(cr, uid, ids):
                 vals.update(self.onchange_employee_id(cr, uid, ids, vals.get('employee_id'), context)['value'])
+        
+#         if 'punch_ids' in vals:
+#             for p in vals.get('punch_ids',[]):
+#                 if p and p[2]:
+#                     if p[2].get('start_time') and p[2].get('punch_date'):
+#                         p[2].update({
+#                                      'start_time' : p[2].get('punch_date') +' '+p[2].get('start_time')
+#                                      })
+#                         print "datesss", p[2]
+#         
         res = super(hr_emp_timesheet, self).write(cr, uid, ids, vals, context)
         return res
             

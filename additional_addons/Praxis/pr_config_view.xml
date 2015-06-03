@@ -543,7 +543,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
             <field name="name">pr.lunch.form</field>
             <field name="model">hr.lunch</field>
             <field name="arch" type="xml">
-                <form string="Lunch Details">
+                <form string="Meal Break">
                     <sheet>
                         <group col="4" colspan="2">
                             <field name="code" required="1"/>
@@ -571,7 +571,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
             <field name="name">pr.lunch.tree</field>
             <field name="model">hr.lunch</field>
             <field name="arch" type="xml">
-                <tree string="Lunch Details">
+                <tree string="Meal Break">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="lunch_hours"/>
@@ -612,12 +612,12 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
             <field name="view_id" eval="False"/>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">
-                    Click to add a new Lunch Details.
+                    Click to add a new Meal Break.
                 </p>
             </field>
         </record>
         
-        <menuitem action="view_lunch_action" id="menu_lunch_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Lunch Details"/>
+        <menuitem action="view_lunch_action" id="menu_lunch_id" sequence="9" parent="hr.menu_hr_configuration_employees" name ="Meal Break"/>
         
         <!--        ****************************************************************************************************
                                 HR Employee Holiday  Master
@@ -714,16 +714,16 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         <group col="4" colspan="2">
                             <field name="code" required="1"/>
                             <field name="name" required="1"/>
-                            <field name="work_hours"/>
+                            <field name="work_hours" required="1"/>
                             <field name="lunch_id" options="{'no_open':True, 'no_create':True}"/>
                             <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
                         </group>
                         <separator string="Time Sheet Settings"/>
                         <group col="4" colspan="2">
-                            <field name="missing_punches"/>
-                            <field name="roundind_id"/>
+                            <field name="missing_punches" required="1"/>
+                            <field name="rounding_id"/>
                         </group>
-                        <separator string="OT_Rule Settings"/>
+                        <separator string="OT Rule Settings"/>
                         <group>
                             <field name="ot_rule_line" nolabel="1">
                                 <tree editable="bottom">
@@ -752,7 +752,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                     <field name="lunch_id"/>
                     <field name="paycode_id"/>
                     <field name="missing_punches"/>
-                    <field name="roundind_id"/>
+                    <field name="rounding_id"/>
                 </tree>
             </field>
         </record>
@@ -769,7 +769,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                     <field name="lunch_id"/>
                     <field name="paycode_id"/>
                     <field name="missing_punches"/>
-                    <field name="roundind_id"/>
+                    <field name="rounding_id"/>
                 </search>
             </field>
         </record>
