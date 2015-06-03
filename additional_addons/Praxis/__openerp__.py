@@ -20,7 +20,7 @@
              'data/res_country_state_data.xml',
              'data/pr_employee_master_data.xml',
              'pr_dashboard.xml',
-             'widget.xml'
+             #'widget.xml'
        
     ],
     
