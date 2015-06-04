@@ -33,6 +33,7 @@ from datetime import datetime
 from dateutil import parser
 import pytz
 from dateutil.relativedelta import relativedelta
+import calendar
 
 
 _logger = logging.getLogger(__name__)
@@ -429,9 +430,11 @@ class hr_punch(osv.osv):
     
     
     _columns = {
-                'punch_date'   : fields.date('Date'),
-                'start_time'   : fields.datetime('Start Time'),
-                'end_time'     : fields.datetime('End Time'),
+                'punch_date'      : fields.date('Date'),
+                'act_start_time'  : fields.datetime('Actual Start Time'),
+                'start_time'      : fields.datetime('Start Time'),
+                'end_time'        : fields.datetime('End Time'),
+                'act_end_time'    : fields.datetime('Actual End Time'),
                 'units'        : fields.float('Units'),
                 'notes'        : fields.text('Notes'),
                 'paid_hrs'     : fields.float('Paid Units'),
@@ -559,6 +562,7 @@ class timesheet_summary(osv.osv):
                 'class_id9'        : fields.many2one('hr.class9','Class9'),
                 'class_id10'       : fields.many2one('hr.class10','Class10'),
                 'timesheet_id'     : fields.many2one('hr.emp.timesheet','Daily Time Sheets'),
+                'paid'             : fields.boolean('Paid'),
                 
                 }
     
@@ -594,7 +598,8 @@ class hr_emp_timesheet(osv.osv):
                'punch_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch'),
                'daily_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', domain=[('type','=','daily')]),
                'summary_ids' : fields.one2many('timesheet.summary','timesheet_id', 'Summary'),
-               'emp_no' : fields.related('employee_id','identification_id', type='char', string='Employee Number')
+               'emp_no' : fields.related('employee_id','identification_id', type='char', string='Employee Number'),
+               
                }
     
     def name_get(self, cr, uid, ids, context=None):
@@ -694,19 +699,23 @@ class hr_emp_timesheet(osv.osv):
                     if case.employee_id.time_rule_id.rounding_id.clock1:
                         round_id = case.employee_id.time_rule_id.rounding_id
                         
-                        start_time = self.gettime(cr, uid, punch_id.start_time, round_id.type1, 
+                        start_time = self.gettime(cr, uid, punch_id.act_start_time, round_id.type1, 
                                                   round_id.hours1, context=context)
                         if start_time:
                             vals.update({'start_time' : start_time})
+                            if uid !=1 :
+                                vals.update({'act_start_time' : start_time})
                 
                 if punch_id.end_time and case.employee_id.time_rule_id.rounding_id :
                     if case.employee_id.time_rule_id.rounding_id.clock2:
                         round_id = case.employee_id.time_rule_id.rounding_id
                         
-                        end_time = self.gettime(cr, uid, punch_id.end_time, round_id.type2, 
+                        end_time = self.gettime(cr, uid, punch_id.act_end_time, round_id.type2, 
                                                   round_id.hours2, context=context)
                         if end_time:
                             vals.update({'end_time' : end_time})
+                            if uid != 1 :
+                                vals.update({'act_end_time' : end_time})
                 
                 punch_obj.write(cr, uid, [punch_id.id], vals, context)
                  
@@ -730,9 +739,13 @@ class hr_emp_timesheet(osv.osv):
         punch_obj = self.pool.get('hr.punch')
         lines = {}
         lunch_hrs = 0.0
+        tot_units = {}
+        
         
         for case in self.browse(cr, uid, ids):
             vals = {}
+            lunch_diff = 0.0
+            break_hours = 0.0
             master_class = (
                            case.employee_id.class_id1 and case.employee_id.class_id1.id or False,
                            case.employee_id.class_id2 and case.employee_id.class_id2.id or False,
@@ -759,11 +772,11 @@ class hr_emp_timesheet(osv.osv):
                         
                         elif p.start_time and not p.end_time:
                             end_time = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S') + relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time})
+                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time, 'act_end_time':end_time})
                         
                         elif p.end_time and not p.start_time:
                             start_time = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S') - relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time})
+                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time, 'act_start_time': start_time})
                             
                             
                     # to  get the time rounding
@@ -774,44 +787,84 @@ class hr_emp_timesheet(osv.osv):
                     
                     end_dt = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S')
                     end_time = end_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
-                    diff = end_time - start_time
                     
+                    # to find the difference between start and end time
+                    diff = end_time - start_time
+                    units = ((diff.seconds) / 60.0) / 60.0
+                    vals.update({'units': units})
                     
                     # to check the lunch hours for employee
                     if case.employee_id.time_rule_id and case.employee_id.time_rule_id.lunch_id :
-                        if case.employee_id.time_rule_id.lunch_id.paid_by_employer :
-                            lunch_hrs =  case.employee_id.time_rule_id.lunch_id.lunch_hours / 100.0
-                            units = ((diff.seconds) / 60.0) / 60.0
-                            vals.update({'units': units, 'paid_hrs' : lunch_hrs})
-                            
+                        lunch_id = case.employee_id.time_rule_id.lunch_id
                         
-                        else:
-                            lunch_hrs =  case.employee_id.time_rule_id.lunch_id.lunch_hours / 100.0
-                            units = (((diff.seconds) / 60.0) / 60.0) - lunch_hrs
-                            vals.update({'units': units, 'paid_hrs' : 0.0})
+                        if lunch_id.lunch_hours and lunch_id.after_work_hour:
+                            lunch_diff = (datetime.now()+relativedelta(hour=lunch_id.after_work_hour, minute=lunch_id.lunch_hours)) - (datetime.now()+relativedelta(hour=0, minute=0))
+                            lunch_diff = ((lunch_diff.seconds) / 60.0) / 60.0
                             
-                    
-                    else:
-                        units = ((diff.seconds) / 60.0) / 60.0
-                        vals.update({'units': units, 'paid_hrs' : 0.0}) 
+                            
+                            if lunch_diff <= units:
+                                break_hours = lunch_id.lunch_hours / 60.0 # coverting the minutes to float
+                                
+                                if case.employee_id.time_rule_id.lunch_id.paid_by_employer :
+                                    vals.update({'units': units})
+                                
+                                else:
+                                    vals.update({'units': (units - break_hours)})
+                                
+                                # to get the difference after the reducing break
+                                units = ((diff.seconds - (lunch_id.lunch_hours * 60)) / 60.0) / 60.0
+                           
+                                        
                                         
                     # for updating the Units
                     punch_obj.write(cr, uid, [p.id], vals, context)
                     
                     # for Punch records
-                    key = (units, case.employee_id.time_rule_id.paycode_id.id, master_class)
-                    if key in lines:
-                        lines[key].append(p.id)
+                    # IF OT RULE
+                    if case.employee_id.time_rule_id.ot_rule_line:
+                        for ot in case.employee_id.time_rule_id.ot_rule_line:
+                            days = [str(x.name) for x in ot.weekday_ids]
+                            
+                            paycode_id = case.employee_id.time_rule_id.paycode_id.id
+                            start_day = calendar.day_name[st_dt.weekday()]
+                            
+                            paycode_id = ot.paycode_id.id
+                            if units > ot.work_hours:
+                                work_hours = ot.work_hours
+                                units = units - ot.work_hours
+                            
+                            else:
+                                 work_hours = units
+                                 units = 0.0
+                                 
+                            key = (paycode_id, master_class)
+                            if key in lines:
+                                lines[key].append(p.id)
+                                tot_units[key] += work_hours
+                            else:
+                                lines[key] = [p.id]
+                                tot_units[key] = work_hours
+                    
+                    # if no OT RULE
                     else:
-                        lines[key] = [p.id]
-                        
-                    # to check if there is lunch hours
-                    if lunch_hrs:
-                        key = (lunch_hrs, case.employee_id.time_rule_id.lunch_id.paycode_id.id, master_class)
+                        key = (case.employee_id.time_rule_id.paycode_id.id, master_class)
                         if key in lines:
                             lines[key].append(p.id)
+                            tot_units[key] += units
                         else:
                             lines[key] = [p.id]
+                            tot_units[key] = units
+                    
+                        
+                    # to check if there is lunch hours
+                    if break_hours:
+                        key = (case.employee_id.time_rule_id.lunch_id.paycode_id.id, master_class)
+                        if key in lines:
+                            lines[key].append(p.id)
+                            tot_units[key] += break_hours
+                        else:
+                            lines[key] = [p.id]
+                            tot_units[key] = break_hours
                         
                 elif p.type =='daily' :
                     master_class = (
@@ -826,29 +879,32 @@ class hr_emp_timesheet(osv.osv):
                                p.class_id9 and p.class_id9.id or False,
                                p.class_id10 and p.class_id10.id or False,
                              )
-                    key = (p.units, p.paycode_id.id, master_class)
+                    key = (p.paycode_id.id, master_class)
                     
                     if key in lines:
                         lines[key].append(p.id)
+                        tot_units[key] += p.units
                     else:
                         lines[key] = [p.id]
+                        tot_units[key] = p.units
                     
                     
             for l in lines:
+                print "l",l
                 sum_lines = {
                              'daily_date' : case.period_end_dt,
-                             'paycode_id' : l[1],
-                             'units'      : l[0] * len( lines[l] ),
-                             'class_id1' :  l[2][0], 
-                             'class_id2' :  l[2][1], 
-                             'class_id3' :  l[2][2], 
-                             'class_id4' :  l[2][3], 
-                             'class_id5' :  l[2][4], 
-                             'class_id6' :  l[2][5], 
-                             'class_id7' :  l[2][6], 
-                             'class_id8' :  l[2][7], 
-                             'class_id9' :  l[2][8], 
-                             'class_id10':  l[2][9], 
+                             'paycode_id' : l[0],
+                             'units'      : tot_units[l],#l[1][10] * len( lines[l] ),
+                             'class_id1' :  l[1][0], 
+                             'class_id2' :  l[1][1], 
+                             'class_id3' :  l[1][2], 
+                             'class_id4' :  l[1][3], 
+                             'class_id5' :  l[1][4], 
+                             'class_id6' :  l[1][5], 
+                             'class_id7' :  l[1][6], 
+                             'class_id8' :  l[1][7], 
+                             'class_id9' :  l[1][8], 
+                             'class_id10':  l[1][9], 
                              }
                 data.append((0,0, sum_lines))
             # deleting the existing line and creating newline

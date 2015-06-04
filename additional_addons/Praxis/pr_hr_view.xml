@@ -222,12 +222,13 @@
                                         <field name="punch_date" required="1" attrs="{'readonly':[('type','=','daily')]}" />
 <!--                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
 -->                                               
+                                        <field name="act_start_time" attrs="{'required':[('type','=','punch'),('end_time','=',False)], 'readonly':[('type','=','daily')]}" class="oe_highlight"/>
                                         <field name="start_time" attrs="{'required':[('type','=','punch'),('end_time','=',False)], 'readonly':[('type','=','daily')]}" class="oe_highlight"/>
                                                <!--on_change="onchange_time(punch_date, start_time, end_time, context)"-->
                                         <field name="end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"/>
 <!--                                               on_change="onchange_time(punch_date, start_time, end_time, context)"-->
-                                        <field name="units" attrs="{'readonly':[('type','=','daily')]}"/>
-                                        <field name="paid_hrs" attrs="{'readonly':[('type','=','daily')]}"/>
+                                        <field name="act_end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+                                        <field name="units" attrs="{'readonly':[('type','=','daily')]}" sum="total"/>
                                         <field name="notes" attrs="{'readonly':[('type','=','daily')]}"/>
 <!--                                        <field name="check" widget="toggle_button"/>-->
                                         <field name="type" invisible="1"/>

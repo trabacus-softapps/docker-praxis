@@ -548,7 +548,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         <group col="4" colspan="2">
                             <field name="code" required="1"/>
                             <field name="name" required="1"/>
-                            <label for="lunch_hours"/>
+                            <label for="lunch_hours"  on_change="onchange_hours(lunch_hours,context)"/>
                             <div>
                                 <field name="lunch_hours" class="oe_inline" nolabel="1" required="1"/> Minutes
                             </div>
@@ -714,9 +714,9 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         <group col="4" colspan="2">
                             <field name="code" required="1"/>
                             <field name="name" required="1"/>
-                            <field name="work_hours" required="1"/>
+                            <field name="work_hours" required="1" />
                             <field name="lunch_id" options="{'no_open':True, 'no_create':True}"/>
-                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}"/>
+                            <field name="paycode_id" options="{'no_open':True, 'no_create':True}" />
                         </group>
                         <separator string="Time Sheet Settings"/>
                         <group col="4" colspan="2">
@@ -724,7 +724,12 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                             <field name="rounding_id"/>
                         </group>
                         <separator string="OT Rule Settings"/>
-                        <group>
+                        
+                      
+                            <group>
+                                <field name="paycode_ids" widget="many2many_tags" required="1" options="{'no_open':True, 'no_create':True}"/>
+                            </group>
+                            <group>
                             <field name="ot_rule_line" nolabel="1">
                                 <tree editable="bottom">
                                     <field name="work_hours"/>
@@ -734,7 +739,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                                 </tree>
                             </field>
                         </group>
-                       
+                        
                     </sheet>
                 </form>
             </field>
@@ -1559,7 +1564,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                 <tree string="Daily" editable="top">
                     <field name="daily_date" required="1"/>
                     <field name="paycode_id" required="1"/>
-                    <field name="units"/>
+                    <field name="units" sum="total"/>
                     <field name="class_id1" invisible="1" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id2" invisible="1" domain="[('class_id','=',class_id1)]" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id3" invisible="1" domain="[('class_id','=',class_id2)]" options='{"no_open": True, "no_create": True}'/>
@@ -1570,8 +1575,8 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                     <field name="class_id8" invisible="1" domain="[('class_id','=',class_id7)]" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id9" invisible="1" domain="[('class_id','=',class_id8)]" options='{"no_open": True, "no_create": True}'/>
                     <field name="class_id10" invisible="1" domain="[('class_id','=',class_id9)]" options='{"no_open": True, "no_create": True}'/>
-                    <field name="notes"/>
-                </tree>
+                  <!--  <field name="paid"/>-->
+                    </tree>
             </field>
         </record>
         

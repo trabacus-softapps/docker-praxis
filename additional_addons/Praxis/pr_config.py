@@ -234,6 +234,20 @@ class hr_lunch(osv.osv):
             'Description must be unique per Record!'),
     ]
     
+    def onchange_hours(self, cr, uid, ids, lunch_hours, context=None):
+        print "inside hours"
+        context = dict(context or {})
+        res = {}
+        warning = ''
+        if work_hours > 60:
+            warning= {
+                    'title'   : _('Warning!'),
+                    'message' : _('Please enter the valid time of 1 hour (i.e <= 60 )')
+                          }
+            res.update({'lunch_hours':0.0})
+                              
+        return {'value' : res , 'warning':warning}
+    
 hr_lunch()
 
 class hr_emp_holiday(osv.osv):
@@ -273,11 +287,15 @@ class hr_ot_rule(osv.osv):
     _name = 'hr.ot.rule'
     _description = 'Hr OT Rule'
     _columns = {
-                'work_hours'  : fields.integer('Hours : Greater Than'),
+                'work_hours'  : fields.float('Hours : Greater Than'),
                 'paycode_id'     : fields.many2one('hr.pay.codes','Pay Code'),
                 'weekday_ids' : fields.many2many('hr.weekdays','rule_weekdays_rel','rule_id','week_id', 'Days'),
-                'rule_id'     : fields.many2one('hr.time.rule','Time Rule')   
+                'rule_id'     : fields.many2one('hr.time.rule','Time Rule'),
                 }
+    
+    
+                    
+                   
     
 #     def onchange_week(self, cr, uid, ids, week_ids, context=None):
 #         res = {}
@@ -306,9 +324,12 @@ class hr_time_rule(osv.osv):
                 'missing_punches' : fields.selection([('unpost','Do Not Post Missing Punch'),
                                                       ('post','Post Missing Punch'),('dntcalc','Do Not Calculate Missing Punch')],'Missing Punches'),
                 'rounding_id'   : fields.many2one('hr.rounding','Rounding'),
-                'ot_rule_line'     : fields.one2many('hr.ot.rule','rule_id','Ot Rule')
+                'ot_rule_line'     : fields.one2many('hr.ot.rule','rule_id','Ot Rule'),
+                'paycode_ids' : fields.many2many('hr.pay.codes','timerule_paycode_rel', 'timerule_id', 'paycode_id', 'Pay Codes')   
                 
                 }
+    
+    
     
     def paycode_duplication(self, cr, uid, ids, context = None):
         paycodes = {}

@@ -56,7 +56,7 @@
         </record>
         
         <record id="week_day_5" model="hr.weekdays">
-            <field name="name">Thurday</field>
+            <field name="name">Thursday</field>
             <field name="code">Thu</field>
         </record>
         
