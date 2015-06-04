@@ -495,7 +495,6 @@ class hr_punch(osv.osv):
 #             punch_date =(parser.parse(''.join((re.compile('\d')).findall(punch_date)))).strftime('%Y-%m-%d')
 #             start_date =(parser.parse(''.join((re.compile('\d')).findall(start_time)))).strftime('%Y-%m-%d')
             
-            print "punch time", punch_time,punch_date , start_time
             if punch_time.date() != start_date.date():
                 warning = {
                               'title'   : _('Warning!'),
@@ -658,7 +657,6 @@ class hr_emp_timesheet(osv.osv):
         
         dates = datetime.strptime(dates, '%Y-%m-%d %H:%M:%S')
         #dates = dates.replace(tzinfo=pytz.utc).astimezone(local_tz)
-        print "initial dates", dates
         
         if rounding == 'round_forward' :
             dates = dates + relativedelta(minutes = minutes)
@@ -699,10 +697,11 @@ class hr_emp_timesheet(osv.osv):
                     if case.employee_id.time_rule_id.rounding_id.clock1:
                         round_id = case.employee_id.time_rule_id.rounding_id
                         
-                        start_time = self.gettime(cr, uid, punch_id.act_start_time, round_id.type1, 
+                        start_time = self.gettime(cr, uid, punch_id.start_time, round_id.type1, 
                                                   round_id.hours1, context=context)
                         if start_time:
                             vals.update({'start_time' : start_time})
+                            # to change the original clock time
                             if uid !=1 :
                                 vals.update({'act_start_time' : start_time})
                 
@@ -710,7 +709,7 @@ class hr_emp_timesheet(osv.osv):
                     if case.employee_id.time_rule_id.rounding_id.clock2:
                         round_id = case.employee_id.time_rule_id.rounding_id
                         
-                        end_time = self.gettime(cr, uid, punch_id.act_end_time, round_id.type2, 
+                        end_time = self.gettime(cr, uid, punch_id.end_time, round_id.type2, 
                                                   round_id.hours2, context=context)
                         if end_time:
                             vals.update({'end_time' : end_time})
@@ -828,22 +827,24 @@ class hr_emp_timesheet(osv.osv):
                             paycode_id = case.employee_id.time_rule_id.paycode_id.id
                             start_day = calendar.day_name[st_dt.weekday()]
                             
-                            paycode_id = ot.paycode_id.id
-                            if units > ot.work_hours:
-                                work_hours = ot.work_hours
-                                units = units - ot.work_hours
-                            
-                            else:
-                                 work_hours = units
-                                 units = 0.0
-                                 
-                            key = (paycode_id, master_class)
-                            if key in lines:
-                                lines[key].append(p.id)
-                                tot_units[key] += work_hours
-                            else:
-                                lines[key] = [p.id]
-                                tot_units[key] = work_hours
+                            if 'All Selected' in days or start_day in days:
+                                paycode_id = ot.paycode_id.id
+                                
+                                if units > ot.work_hours:
+                                    work_hours = ot.work_hours
+                                    units = units - ot.work_hours
+                                
+                                else:
+                                     work_hours = units
+                                     units = 0.0
+                                     
+                                key = (paycode_id, master_class)
+                                if key in lines:
+                                    lines[key].append(p.id)
+                                    tot_units[key] += work_hours
+                                else:
+                                    lines[key] = [p.id]
+                                    tot_units[key] = work_hours
                     
                     # if no OT RULE
                     else:
@@ -890,7 +891,6 @@ class hr_emp_timesheet(osv.osv):
                     
                     
             for l in lines:
-                print "l",l
                 sum_lines = {
                              'daily_date' : case.period_end_dt,
                              'paycode_id' : l[0],
@@ -922,7 +922,6 @@ class hr_emp_timesheet(osv.osv):
         return res
     
     def write(self, cr, uid, ids, vals, context=None):
-        print "Vals....", vals
         if vals.get('employee_id'):
             for case in self.browse(cr, uid, ids):
                 vals.update(self.onchange_employee_id(cr, uid, ids, vals.get('employee_id'), context)['value'])
