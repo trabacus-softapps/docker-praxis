@@ -101,6 +101,7 @@
              
                 
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='department_id']" position="replace"/>
+                <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='parent_id']" position="replace"/>
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='job_id']" position="replace"/>
                 <xpath expr="//notebook/page[@string='Public Information']/group/group[@string='Position']/field[@name='coach_id']" position="replace"/>
                 
@@ -255,8 +256,26 @@
                         <page string="Timesheet Summary">
                             <field name="summary_ids" readonly="1" context="{'employee_id': employee_id, 'tree_view_ref': 'view_summary_class_tree'}" nolabel="1"/>
                         </page>
+                        
+                        <page string = "Audit">
+                            <field name="audit_ids" nolabel="1" editable="top">
+                                <tree>
+                                    <field name="punch_date"/>
+                                    <field name="change_time"/>
+                                    <field name="user_id"/>
+                                    <field name="event_type"/>
+                                    <field name="column_name"/>
+                                    <field name="original_value"/>
+                                    <field name="new_value"/>
+                                </tree>
+                            </field>
+                        </page>
                         </notebook>
                     </sheet>
+              <!--      <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>-->
                 </form>
             </field>
         </record>

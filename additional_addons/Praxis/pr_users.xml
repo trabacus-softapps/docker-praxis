@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <record id="view_pr_res_users_form" model="ir.ui.view">
+            <field name="name">view.pr.res.users.form</field>
+            <field name="model">res.users</field>
+            <field name="inherit_id" ref="base.view_users_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[@string='Preferences']" position="after">
+                    <page string="Permissions">
+                        <group>
+                            <field name="class_ids1" invisible="1" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids2" invisible="1" domain="[('class_id','in',class_ids1[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids3" invisible="1" domain="[('class_id','in',class_ids2[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids4" invisible="1" domain="[('class_id','in',class_ids3[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids5" invisible="1" domain="[('class_id','in',class_ids4[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids6" invisible="1" domain="[('class_id','in',class_ids5[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids7" invisible="1" domain="[('class_id','in',class_ids6[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids8" invisible="1" domain="[('class_id','in',class_ids7[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids9" invisible="1" domain="[('class_id','in',class_ids8[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                            <field name="class_ids10" invisible="1" domain="[('class_id','in',class_ids9[0][2])]" options='{"no_open": True, "no_create": True}' widget="many2many_tags"/>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+        
+    </data>
+</openerp>

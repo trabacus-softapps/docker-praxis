@@ -16,10 +16,12 @@
              'pr_config_view.xml',
              'pr_hr_view.xml',
              'security/pr_security.xml',
+             'security/pr_security_rules.xml',
              'security/ir.model.access.csv',
              'data/res_country_state_data.xml',
              'data/pr_employee_master_data.xml',
              'pr_dashboard.xml',
+             'pr_users.xml',
              #'widget.xml'
        
     ],

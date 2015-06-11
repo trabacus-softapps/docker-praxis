@@ -536,6 +536,122 @@ class hr_punch(osv.osv):
             
         
         return {'value' : res, 'warning' : warning }
+    
+    def create_audit(self, cr, uid, ids, vals, context=None):
+        context = dict(context or {})
+        
+        audit_vals = {}
+        audit_obj = self.pool.get('hr.audit')
+        today = datetime.now()
+        
+        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        local_tz = pytz.timezone(zone)
+        
+        if ids:
+            for case in self.browse(cr, uid, ids):
+                new_start_date = ''
+                old_start_date = ''
+                audit_vals.update({
+                               'punch_date' : vals.get('punch_date',case.punch_date),
+                               'user_id'    : uid,
+                               'event_type' : context.get('event_type'),
+                               'timesheet_id' : case.timesheet_id.id,
+                               'change_time' : today
+                                       
+                                       })
+                
+                if context.get('event_type')=='delete':
+                    audit_obj.create(cr, uid, audit_vals)
+                    
+                
+                if 'start_time' in vals:
+                    
+                    if case.start_time:
+                        old_start_date = datetime.strptime(case.start_time, '%Y-%m-%d %H:%M:%S')
+                        old_start_date = old_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                        old_start_date = old_start_date.strftime('%Y-%m-%d %I:%M %p')
+                    
+                    if vals.get('start_time'):
+                        new_start_date = datetime.strptime(vals.get('start_time'), '%Y-%m-%d %H:%M:%S')
+                        new_start_date = new_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                        new_start_date = new_start_date.strftime('%Y-%m-%d %I:%M %p')
+                    
+                    for fname, field in case._columns.iteritems():
+                        if fname == 'start_time':
+                            desc = getattr(field, 'string', '')
+                            
+                    audit_vals.update({
+                                       'original_value':old_start_date,
+                                       'new_value' : new_start_date,
+                                       'column_name' : desc,
+                                       })
+                    
+                    audit_obj.create(cr, uid, audit_vals)
+                
+                if 'end_time' in vals: 
+                    
+                    if case.end_time:
+                        old_end_date = datetime.strptime(case.end_time, '%Y-%m-%d %H:%M:%S')
+                        old_end_date = old_end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                        old_end_date = old_end_date.strftime('%Y-%m-%d %I:%M %p')
+                    
+                    if vals.get('end_time'):
+                        new_end_date = datetime.strptime(vals.get('end_time'), '%Y-%m-%d %H:%M:%S')
+                        new_end_date = new_end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                        new_end_date = new_end_date.strftime('%Y-%m-%d %I:%M %p')
+                    
+                    for fname, field in case._columns.iteritems():
+                        if fname == 'end_time':
+                            desc = getattr(field, 'string', '')
+                    
+                    audit_vals.update({
+                                       'original_value':old_end_date,
+                                       'new_value' : new_end_date,
+                                       'column_name' : desc,
+                                       
+                                       })
+                    audit_obj.create(cr, uid, audit_vals)
+                    
+                if 'units' in vals:
+                    audit_vals.update({
+                                   'original_value':case.units or 0.00,
+                                   'new_value' : vals.get('units',0.00),
+                                   'column_name' : 'Units',
+                                   
+                                   })
+                    audit_obj.create(cr, uid, audit_vals)
+                   
+                    
+        return True
+                
+    
+    def create(self, cr, uid, vals, context=None):
+        context = dict(context or {})
+        res = super(hr_punch, self).create(cr, uid, vals, context)
+        if uid != 1 :
+            context.update({'event_type':'create'})
+            self.create_audit(cr, uid, [res], vals, context=context)
+        
+        return res
+    
+    
+    def write(self, cr, uid, ids, vals, context=None):
+        context = dict(context or {})
+        if uid != 1 :
+            context.update({'event_type':'edit'})
+            self.create_audit(cr, uid, ids, vals, context=context)
+        return super(hr_punch, self).write(cr, uid, ids, vals, context)
+    
+    def unlink(self, cr, uid, ids, context=None):
+        context = dict(context or {})
+        if uid != 1 :
+            context.update({'event_type':'delete'})
+            self.create_audit(cr, uid, ids, {}, context=context)
+        
+        return super(hr_punch, self).unlink(cr, uid, ids, context)
+        
+    
+    
              
     
 hr_punch()
@@ -589,15 +705,17 @@ timesheet_summary()
 
 class hr_emp_timesheet(osv.osv):
     _name = 'hr.emp.timesheet'
+    _inherit = ['mail.thread']
     _description = 'Hr Employee Timesheets'
     _columns= {
                'employee_id' : fields.many2one('hr.employee','Employee'),
                'period_start_dt' : fields.date('Period Start'),
                'period_end_dt' : fields.date('Period End'),
-               'punch_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch'),
-               'daily_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', domain=[('type','=','daily')]),
+               'punch_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', track_visibility="onchange"),
+               'daily_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', domain=[('type','=','daily')], track_visibility="onchange"),
                'summary_ids' : fields.one2many('timesheet.summary','timesheet_id', 'Summary'),
                'emp_no' : fields.related('employee_id','identification_id', type='char', string='Employee Number'),
+               'audit_ids' : fields.one2many('hr.audit','timesheet_id','Audit')
                
                }
     
@@ -999,5 +1117,161 @@ class hr_holidays(osv.osv):
         return res
         
 hr_holidays()
+
+
+class ir_rule(osv.osv):
+    _inherit = 'ir.rule'
+    
+    def get_user_status(self, cr, uid, ids, context=None):
+        
+        """ To check the user whether supervisor or manager 
+        @return - True if supervisor else False
+        """
+        context = dict(context or {})
+        user_obj = self.pool.get('res.users')
+        emp_obj = self.pool.get('hr.employee')
+        
+        cr.execute("""
+                select e.id
+                   from hr_employee e 
+                   inner join resource_resource r on r.id = e.resource_id
+                   inner join res_users ru on ru.id =  r.user_id
+                   inner join hr_employee e1 on e1.parent_id = e.id
+                   and ru.id = """ + str(uid)
+                   )
+        user_ids = [x[0] for x in cr.fetchall()]
+        if user_ids :
+            return True
+        
+        return False
+    
+    def class_domain(self, cr, uid, context=None):
+        """ to get the domian based on the class mappings"""
+        
+        vals = {}
+        cr.execute("select class_id from users_class1_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id1':data})
+            
+
+        
+        cr.execute("select class_id from users_class2_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id2':data})
+        
+        cr.execute("select class_id from users_class3_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id3':data})
+        
+        cr.execute("select class_id from users_class4_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id4':data})
+        
+        cr.execute("select class_id from users_class5_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id5':data})
+    
+        cr.execute("select class_id from users_class6_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id6':data})
+        
+        cr.execute("select class_id from users_class7_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id7':data})
+        
+        cr.execute("select class_id from users_class8_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id8':data})
+        
+        
+        cr.execute("select class_id from users_class9_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id9':data})
+    
+        cr.execute("select class_id from users_class10_rel where uid="+str(uid))
+        data = [x[0] for x in cr.fetchall() ]
+        if data:
+            vals.update({'class_id10':data})
+        
+        
+        if vals:
+            return vals
+        
+        return False
+    
+    #overidden
+    def domain_get(self, cr, uid, model_name, mode='read', context=None):
+        dom = self._compute_domain(cr, uid, model_name, mode)
+        if dom:
+            if model_name in ('hr.employee', 'hr.holidays', 'hr.emp.timesheet'):
+                # to check for the manager 
+                cr.execute(""" select distinct uid
+                                    from res_groups_users_rel gu 
+                                    inner join res_groups g on g.id = gu.gid
+                                    inner join res_users ru on ru.id = gu.uid
+                                    inner join res_partner rp on rp.id = ru.partner_id
+                                    where g.name = 'Manager' and uid = """ + str(uid) +"""
+                                    and g.category_id = (select id from ir_module_category where name = 'Praxis HR')
+                                    """)
+                user_ids = [x[0] for x in cr.fetchall()]
+                
+                if uid in user_ids:
+                    res = self.get_user_status(cr, uid, [], context)
+                    if res:
+                        # if the user is supervisor 
+                        if model_name == 'hr.employee':
+                            dom = ['|',('parent_id.user_id','=',uid),('user_id','=',uid)]
+                        else:
+                            dom = ['|',('employee_id.user_id','=',uid),('employee_id.parent_id.user_id','=',uid)]
+                    else:
+                        #if users 
+                        domain = self.class_domain(cr, uid, context)
+                        if domain:
+                            newvals = sorted(domain)
+                            
+                            if model_name == 'hr.employee':
+                                dom = [(newvals[-1] ,'in', domain[newvals[-1]])]
+                            
+                            else:
+                                dom = [('employee_id.'+newvals[-1] ,'in', domain[newvals[-1]])]
+                            
+                
+            # _where_calc is called as superuser. This means that rules can
+            # involve objects on which the real uid has no acces rights.
+            # This means also there is no implicit restriction (e.g. an object
+            # references another object the user can't see).
+            query = self.pool[model_name]._where_calc(cr, SUPERUSER_ID, dom, active_test=False)
+            return query.where_clause, query.where_clause_params, query.tables
+        return [], [], ['"' + self.pool[model_name]._table + '"']
+    
+ir_rule()
+
+
+class hr_audit(osv.osv):
+    _description = "Hr Audit"
+    _name = 'hr.audit'
+    _columns = {
+                'change_time'   : fields.datetime('Change Date'),
+                'user_id'       : fields.many2one('res.users','User'),
+                'event_type'    : fields.selection([('create','Create'),('edit','Edit'),('delete','Delete')],'Event Type'),
+                'column_name'   : fields.char('Column Name'),
+                'original_value' : fields.char('Original Value'),
+                'new_value'      : fields.char('New Value'),
+                'punch_date'     : fields.date('Punch Date'),
+                'timesheet_id'   : fields.many2one('hr.emp.timesheet','Time Sheet')
+                }
+hr_audit()
+                
+                
+    
 
     
