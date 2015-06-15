@@ -59,6 +59,8 @@
                                     MENU PERMISSION FOR USERS (ADDING)
             **************************************************************************************************-->
         
+        <menuitem action="base.action_res_groups" id="base.menu_action_res_groups" parent="base.menu_users" groups="base.group_erp_manager,base.group_system,base.group_no_one"/>
+        
         <menuitem id="hr.menu_hr_configuration" name="Configuration" parent="hr.menu_hr_root" groups="base.group_hr_user,Praxis.group_praxis_manager" sequence="50" />
        
         <menuitem id="hr.menu_hr_configuration_employees" name="Employees" parent="hr.menu_hr_configuration" groups="base.group_hr_user,Praxis.group_praxis_manager" sequence="1"/>

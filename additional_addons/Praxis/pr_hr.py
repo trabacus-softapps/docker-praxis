@@ -34,7 +34,10 @@ from dateutil import parser
 import pytz
 from dateutil.relativedelta import relativedelta
 import calendar
-
+from dateutil import rrule
+from xlsxwriter.workbook import Workbook
+import time
+import os
 
 _logger = logging.getLogger(__name__)
 
@@ -101,7 +104,34 @@ class hr_employee(osv.osv):
         return False
             
         
-    
+    def _get_login_status(self, cr, uid, ids, field_name, args, context=None):
+        res = {}
+        today = datetime.now()
+        punch_date = today.strftime('%Y-%m-%d')
+        ts_obj = self.pool.get('hr.emp.timesheet')
+        punch_obj = self.pool.get('hr.punch')
+        
+        for case in self.browse(cr, uid, ids):
+            res[case.id]={
+                          'log_in'   : False,
+                          'log_out'  : False
+                          }
+            
+            sheet_ids = ts_obj.search(cr , uid, [('period_start_dt','<=',punch_date),('period_end_dt','>=',punch_date), 
+                                                 ('employee_id','=',case.id)])
+            
+            for s in ts_obj.browse(cr, uid, sheet_ids):
+                p_ids = punch_obj.search(cr, uid, [('punch_date','=',punch_date),('timesheet_id','=',s.id)])
+                
+                for p in punch_obj.browse(cr, uid, p_ids):
+                    
+                    if p.end_time :
+                        res[case.id]['log_out'] = True
+                    
+                    if not p.end_time and p.start_time:
+                        res[case.id]['log_in'] = True
+            
+        return res
     
     
     _columns = {
@@ -166,11 +196,17 @@ class hr_employee(osv.osv):
                 'phone'            : fields.char('Phone'),
                 'mobile'           : fields.char('Mobile'),
                 'display_name'     : fields.function(_display_name, type='char', string='Name', select=True),
-                'time_rule_id'     : fields.many2one('hr.time.rule','Time Rule')
-                  
+                'time_rule_id'     : fields.many2one('hr.time.rule','Time Rule'),
+                'log_in'           : fields.function(_get_login_status, type="boolean", store=False, multi="all", string="Log in"),
+                'log_out'          : fields.function(_get_login_status, type="boolean", store=False, multi="all", string="Log out") 
                 }
+    
+    
+    
     _defaults = {
                  'country_id'   : get_country,
+                 'log_in'   : False,
+                 'log_out'  : False
                  }
     
     def onchange_payinfo(self, cr, uid, ids, f_get , unit_pay_rate, days_payable, monthly_pay, annual_pay):
@@ -551,6 +587,10 @@ class hr_punch(osv.osv):
             for case in self.browse(cr, uid, ids):
                 new_start_date = ''
                 old_start_date = ''
+                new_end_date = ''
+                old_end_date = ''
+                old_units = 0.0
+                new_units = 0.0
                 audit_vals.update({
                                'punch_date' : vals.get('punch_date',case.punch_date),
                                'user_id'    : uid,
@@ -576,17 +616,18 @@ class hr_punch(osv.osv):
                         new_start_date = new_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
                         new_start_date = new_start_date.strftime('%Y-%m-%d %I:%M %p')
                     
-                    for fname, field in case._columns.iteritems():
-                        if fname == 'start_time':
-                            desc = getattr(field, 'string', '')
+                    if old_start_date != new_start_date :
                             
-                    audit_vals.update({
-                                       'original_value':old_start_date,
-                                       'new_value' : new_start_date,
-                                       'column_name' : desc,
-                                       })
-                    
-                    audit_obj.create(cr, uid, audit_vals)
+                                
+                        audit_vals.update({
+                                           'original_value':old_start_date,
+                                           'new_value' : new_start_date,
+                                           'column_name' : 'Start Time',
+                                           })
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                                                   ,('original_value','=',old_start_date),('new_value','=',new_start_date), ('column_name','=','Start Time')])
+                        if not audit_ids:
+                            audit_obj.create(cr, uid, audit_vals)
                 
                 if 'end_time' in vals: 
                     
@@ -600,26 +641,39 @@ class hr_punch(osv.osv):
                         new_end_date = new_end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
                         new_end_date = new_end_date.strftime('%Y-%m-%d %I:%M %p')
                     
-                    for fname, field in case._columns.iteritems():
-                        if fname == 'end_time':
-                            desc = getattr(field, 'string', '')
-                    
-                    audit_vals.update({
-                                       'original_value':old_end_date,
-                                       'new_value' : new_end_date,
-                                       'column_name' : desc,
-                                       
-                                       })
-                    audit_obj.create(cr, uid, audit_vals)
+                   
+                    if old_end_date != new_end_date :
+                        audit_vals.update({
+                                           'original_value':old_end_date,
+                                           'new_value' : new_end_date,
+                                           'column_name' : 'End Time',
+                                           
+                                           })
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                                                   ,('original_value','=',old_end_date),('new_value','=',new_end_date), ('column_name','=','End Time')])
+                        if not audit_ids:
+                            audit_obj.create(cr, uid, audit_vals)
                     
                 if 'units' in vals:
-                    audit_vals.update({
-                                   'original_value':case.units or 0.00,
-                                   'new_value' : vals.get('units',0.00),
-                                   'column_name' : 'Units',
-                                   
-                                   })
-                    audit_obj.create(cr, uid, audit_vals)
+                    
+                    if case.units:
+                        old_units = case.units
+                    
+                    if 'units' in vals :
+                        new_units = vals.get('units')
+                    
+                    if old_units != new_units:
+                        
+                        audit_vals.update({
+                                       'original_value':case.units or 0.00,
+                                       'new_value' : vals.get('units',0.00),
+                                       'column_name' : 'Units',
+                                       
+                                       })
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                                                   ,('original_value','=',old_units),('new_value','=',new_units), ('column_name','=','Units')])
+                        if not audit_ids:
+                            audit_obj.create(cr, uid, audit_vals)
                    
                     
         return True
@@ -707,6 +761,21 @@ class hr_emp_timesheet(osv.osv):
     _name = 'hr.emp.timesheet'
     _inherit = ['mail.thread']
     _description = 'Hr Employee Timesheets'
+    
+    
+    def default_get(self, cr, uid, fields, context=None):
+        
+        emp_obj = self.pool.get('hr.employee')
+        context = dict(context or {})
+        res = super(hr_emp_timesheet, self).default_get(cr, uid, fields, context)
+        emp_ids = emp_obj.search(cr, uid, [('resource_id.user_id','=', uid)])
+        
+        if emp_ids:
+            res.update({'employee_id': emp_ids[0]})
+        
+        print "res...", res, emp_ids
+        return res
+    
     _columns= {
                'employee_id' : fields.many2one('hr.employee','Employee'),
                'period_start_dt' : fields.date('Period Start'),
@@ -780,13 +849,13 @@ class hr_emp_timesheet(osv.osv):
             dates = dates + relativedelta(minutes = minutes)
             interval = (dates.minute / minutes) * minutes
             dates = dates.replace(minute = interval)
-            return dates
+            return dates.strftime('%Y-%m-%d %H:%M:%S')
         
         
         elif rounding == 'round_back':
             interval = (dates.minute / minutes) * minutes
             dates = dates.replace(minute = interval)
-            return dates
+            return dates.strftime('%Y-%m-%d %H:%M:%S')
         
         else:
             interval = dates.minute / minutes
@@ -799,7 +868,7 @@ class hr_emp_timesheet(osv.osv):
            
             dates = dates.replace(minute = 0)
             dates = dates + relativedelta(minutes = interval)
-            return dates
+            return dates.strftime('%Y-%m-%d %H:%M:%S')
         
         return res
     
@@ -1056,6 +1125,504 @@ class hr_emp_timesheet(osv.osv):
         res = super(hr_emp_timesheet, self).write(cr, uid, ids, vals, context)
         return res
             
+            
+    def dummy_button(self,cr, uid, ids, context=None):
+        status_obj = self.pool.get("monthly.status")
+        
+        status_obj.generate_montly_status_xls(cr, uid, ids,context)
+        
+        return True
+    
+    def get_file(self, cr, uid, report_data, context=None):
+        print "report datasssssssssssssssssss", report_data, context
+        sheet_ids = report_data['variables']['sheet_ids']
+        
+        datafile = '/home/serveradmin/Desktop/test.xlsx'
+        workbook = Workbook(datafile)
+        sheet = workbook.add_worksheet()
+        punch_obj = self.pool.get('hr.punch')
+        holiday_obj = self.pool.get('hr.emp.holiday')
+        
+        today = datetime.now()
+        
+        vals = {}
+        sheet.set_column('A:A', 5)
+        sheet.set_column('B:B', 20)
+        sheet.set_column('C:C', 20)
+        sheet.set_column('D:D', 20)
+        sheet.set_column('E:AF', 5)
+        sheet.set_column('AI:AZ', 15)
+        
+        sheet.write(0,0,'Unit')
+        sheet.write(0,5,'EmployeeType : Temporary')
+        
+        text_centre = workbook.add_format({'align': 'centre','valign':'top'})
+        
+        bold_centre = workbook.add_format({'align': 'centre'})
+        bold_centre.set_bg_color('5C70A4')
+        bold_centre.set_font_color('white')
+        bold_centre.set_border()
+        
+        border_style = workbook.add_format({'align': 'centre'})
+        border_style.set_border()
+        
+        sheet.write(1, 0, '#', bold_centre)
+        sheet.write(1, 1, 'Emp No.', bold_centre)
+        sheet.write(1, 2, 'Name', bold_centre)
+        sheet.write(1, 3, 'Designation', bold_centre)
+        
+        i= 4
+        j=2
+        k =0
+        slno = 0
+        for dt in rrule.rrule(rrule.DAILY, dtstart=datetime.strptime('2015-06-01', '%Y-%m-%d'),until=datetime.strptime('2015-06-30',  '%Y-%m-%d')):
+            sheet.write(1,i, dt.strftime('%d'), bold_centre)
+            i = i+1
+        
+        sheet.write(1,i, 'Holiday(H)',bold_centre)
+        i = i+1
+        sheet.write(1,i, 'Absent(A)',bold_centre)
+        i = i+1
+        sheet.write(1,i, 'Present(P)',bold_centre)
+        i = i+1
+        sheet.write(1,i, 'Leave(L)',bold_centre)
+        i = i+1
+        sheet.write(1,i, 'WeeklyOff(W)',bold_centre)
+        i = i+1
+        sheet.write(1,i, 'Payable Days',bold_centre)
+        
+        
+        for case in self.browse(cr, uid, sheet_ids):
+            p_cnt = 0
+            a_cnt = 0
+            h_cnt = 0
+            l_cnt = 0
+            wo_cnt = 0
+            slno = slno + 1
+            
+            col_value = [slno, case.employee_id.identification_id, case.employee_id.last_name + ' ' +case.employee_id.name , '' ]
+            
+            punch_date = datetime.strptime('2015-06-01', '%Y-%m-%d')
+            for r in range(1, calendar.monthrange(punch_date.year, punch_date.month +1)[1]):
+                punch_date = punch_date.replace(day = r)
+                punch_ids = punch_obj.search(cr, uid, [('timesheet_id','=', case.id),('punch_date','=',punch_date)])
+                
+                if punch_ids:
+                    for p in punch_obj.browse(cr, uid ,punch_ids):
+                        if p.type != 'daily':
+                            if p.units > 7:
+                                status = 'P'
+                                p_cnt = p_cnt + 1
+                            
+                            else:
+                                status = 'P \n 1/2'
+                                p_cnt = p_cnt + 1
+                        else:
+                            status = 'L'
+                            l_cnt = l_cnt + 1
+                else:
+                    if punch_date.weekday() == 6:
+                        status = 'W'
+                        wo_cnt = wo_cnt + 1
+                    
+                    else:
+                        
+                        if case.employee_id.time_rule_id and case.employee_id.time_rule_id.paycode_id:
+                            holiday_ids = holiday_obj.search(cr, uid, [('paycode_id','=',case.employee_id.time_rule_id.paycode_id.id), ('date','=',punch_date.strftime('%Y-%m-%d'))])
+                            
+                            if holiday_ids:
+                                status = 'H'
+                                h_cnt = h_cnt +1
+                            else:
+                                if punch_date > today:
+                                    status = 'X'
+                                else:
+                                    status = 'A'
+                                    a_cnt = a_cnt +1
+                                
+                col_value.append(status)
+            col_value.extend([h_cnt, a_cnt, p_cnt, l_cnt, wo_cnt, (p_cnt + wo_cnt)])
+            vals[case.id] = col_value
+            print "vals,,,,,,,,,,,", vals
+                
+        
+        j = 2
+        for v in vals.values():
+            if 'P \n 1/2' in v:
+                sheet.set_row(j, 30)
+            
+            k = 0
+            for data in v:
+                sheet.write(j,k, data, text_centre)
+                k= k+1
+            j = j+1
+            
+                            
+           
+        workbook.close()
+        fp = open(datafile, 'rb')
+        contents = fp.read()
+        os.remove(datafile) 
+        return contents  
+
+
+   # Monthly Status Report
+    def generate_montly_status_xls(self, cr, uid, ids, context=None):
+        context = dict(context or {})
+        emp_obj = self.pool.get("hr.employee")
+        timesheet_obj = self.pool.get("hr.emp.timesheet")
+        punch_obj = self.pool.get("hr.punch")
+        hrot_obj = self.pool.get("hr.ot.rule")
+        
+        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        local_tz = pytz.timezone(zone)
+        
+        
+        datafile = '/home/serveradmin/Desktop/monthly_status.xlsx'
+        workbook = Workbook(datafile)
+        sheet = workbook.add_worksheet()
+        sheet.set_column('A:A',10)
+        sheet.set_column('B:ZZ',06)
+        
+        
+        
+        bold = workbook.add_format({'bold': True})
+        bold.set_font_name('Verdana')
+        bold.set_font_size(9)
+        
+        left = workbook.add_format({'align': 'left'})
+        left.set_font_name('Verdana')
+        left.set_font_size(8)
+        
+        left = workbook.add_format({'align': 'center'})
+        left.set_font_name('Verdana')
+        left.set_font_size(8)
+        
+        bold_left = workbook.add_format({'align': 'left', 'bold': True})
+        bold_left.set_font_name('Verdana')
+        bold_left.set_font_size(9)
+        
+        bold_left_border = workbook.add_format({'align': 'left', 'bold': True})
+        bold_left_border.set_font_name('Verdana')
+        bold_left_border.set_font_size(9)
+        bold_left_border.set_border(1)
+        
+        
+        bold_centre = workbook.add_format({'align': 'centre', 'bold': True})
+        bold_centre.set_font_name('Verdana')
+        bold_centre.set_font_size(8)
+        
+        
+        bold_centre_colour = workbook.add_format({'align': 'centre', 'bold': True})
+        bold_centre_colour.set_font_name('Verdana')
+        bold_centre_colour.set_font_size(8)
+        bold_centre_colour.set_bg_color('2C4770')
+        bold_centre_colour.set_font_color('white')
+        bold_centre_colour.set_border(1)  
+        
+        
+        border_bottom = workbook.add_format({'align': 'left'})
+        border_bottom.set_font_name('Verdana')
+        border_bottom.set_font_size(2)
+        border_bottom.set_bottom(1)
+        
+        border_right = workbook.add_format({'align': 'left'})
+        border_right.set_font_name('Verdana')
+        border_right.set_font_size(2)
+        border_right.set_right(1)
+        
+        
+        
+        centre = workbook.add_format({'align': 'centre'})
+        centre.set_font_name('Verdana')
+        centre.set_font_size(8)
+        
+        merge_format_color = workbook.add_format({
+                    'bold': 1,
+                    'align': 'centre',
+                    'valign': 'vcenter',
+                    })
+        merge_format_color.set_font_color('2C4770')
+        
+        
+        merge_format = workbook.add_format({
+                    'bold': 1,
+                    'align': 'left',
+                    'valign': 'vcenter',
+                    })
+        
+        merge_format_centre = workbook.add_format({
+                    'bold': 1,
+                    'align': 'centre',
+                    'valign': 'vcenter',
+                    })
+        
+        
+        merge_format_b = workbook.add_format({
+                    'align': 'left',
+                    'valign': 'vcenter',
+                    })
+        merge_format_b.set_underline(1)
+        
+        row = 0
+        col = 1
+        head = 0
+        colcount = 0
+        
+        
+        cr.execute("""
+                SELECT
+                      t.employee_id
+    
+                FROM hr_emp_timesheet t
+                INNER JOIN hr_employee e on e.id = t.employee_id
+                
+                WHERE t.period_start_dt >= '2015-07-01' AND t.period_end_dt <= '2015-07-31'
+                
+                GROUP BY t.employee_id
+                ORDER BY t.employee_id
+        
+                    """)
+        
+        emp_ids = [x[0] for x in cr.fetchall()]
+        z = 2
+        row = 5
+        if emp_ids:  
+            for emp in emp_obj.browse(cr, uid, emp_ids):
+                
+                sheet.set_row(z+2,25)
+                
+                sheet.merge_range('K1:O1', 'Monthly Status Report',merge_format_color)
+                sheet.write(1,0, 'Unit', bold_left)
+                period = 'Period' +' '+ str('2015-07-01') +' ' +str('2015-07-31')
+                sheet.merge_range('K2:O2', period, merge_format_centre)
+#                 pos = "'K"+str(2)+":O"+str(2)+"'"
+#                 sheet.merge_range('K2:O2', period, merge_format_centre)
+                
+                emp_no = 'Emp No:' +' '+ str(emp.identification_id)
+                
+                sheet.write(z, 0, emp_no, bold_left)
+                
+                emp_name = 'Employee Name' + ' ' +str(emp.name)+str(emp.last_name)
+                
+                sheet.write(z, 4, emp_name, bold_left)
+                
+                comp_name = 'Company:'+ ' ' + str(emp.company_id.name) 
+                
+                sheet.write(z, 16, comp_name, bold_left)
+                
+                
+                cr.execute("""
+                        select gen_date::date from generate_series('2015-07-01', 
+                          '2015-07-31', '1 day'::interval) gen_date
+                        """)
+                i = 1
+                cnt = cr.dictfetchall()
+                dys = len(cnt)
+                for d in cnt:
+                    dt = datetime.strptime(d['gen_date'], '%Y-%m-%d')
+                    week = dt.strftime('%a')
+                    day = dt.strftime('%d')
+                    
+                    week_day = str(day)+ ' \n' + week
+                    sheet.write(z+2, i, week_day, bold_centre_colour)
+                    i = i+1
+                    
+                
+                sheet.write(z+3, 0, 'Status', bold_left_border)
+                sheet.write(z+4, 0, 'In Time', bold_left_border)
+                sheet.write(z+5, 0, 'Out Time', bold_left_border)                        
+                sheet.write(z+6, 0, 'Duration', bold_left_border)
+                sheet.write(z+7, 0, 'Regular', bold_left_border)
+                sheet.write(z+8, 0, 'OT ', bold_left_border)
+                sheet.write(z+9, 0, 'Shift', bold_left_border)
+#                 sheet.write(z+9, 1, '',border_bottom )
+#                 sheet.write(z+9, 2, '',border_bottom )
+#                 sheet.write(z+9, 3, '',border_bottom )
+#                 sheet.write(z+9, 4, '',border_bottom )
+#                 sheet.write(z+9, 5, '',border_bottom )
+#                 sheet.write(z+9, 6, '',border_bottom )
+#                 sheet.write(z+9, 7, '',border_bottom )
+#                 sheet.write(z+9, 8, '',border_bottom )
+#                 sheet.write(z+9, 9, '',border_bottom )
+#                 sheet.write(z+9, 10, '',border_bottom )
+#                 sheet.write(z+9, 11, '',border_bottom )
+#                 sheet.write(z+9, 12, '',border_bottom )
+#                 sheet.write(z+9, 13, '',border_bottom )
+#                 sheet.write(z+9, 14, '',border_bottom )
+#                 sheet.write(z+9, 15, '',border_bottom )
+#                 sheet.write(z+9, 16, '',border_bottom )
+#                 sheet.write(z+9, 17, '',border_bottom )
+#                 sheet.write(z+9, 18, '',border_bottom )
+#                 sheet.write(z+9, 19, '',border_bottom )
+#                 sheet.write(z+9, 20, '',border_bottom )
+#                 sheet.write(z+9, 21, '',border_bottom )
+#                 sheet.write(z+9, 22, '',border_bottom )
+#                 sheet.write(z+9, 23, '',border_bottom )
+#                 sheet.write(z+9, 24, '',border_bottom )
+#                 sheet.write(z+9, 25, '',border_bottom )
+#                 sheet.write(z+9, 26, '',border_bottom )
+#                 sheet.write(z+9, 27, '',border_bottom )
+#                 sheet.write(z+9, 28, '',border_bottom )
+#                 print "DYS",dys
+#                 if dys >= 29: 
+#                     sheet.write(z+9, 29, '',border_bottom )
+#                     
+#                 if dys == 29: 
+#                     sheet.write(z+3, 29, '', border_right)
+#                     sheet.write(z+4, 29, '', border_right)
+#                     sheet.write(z+5, 29, '', border_right)                        
+#                     sheet.write(z+6, 29, '', border_right)
+#                     sheet.write(z+7, 29, '', border_right)
+#                     sheet.write(z+8, 29, '', border_right)
+#                     sheet.write(z+9, 29, '', border_right)
+#                     
+#                 if dys >= 30:    
+#                     sheet.write(z+9, 30, '',border_bottom )
+#                     
+#                 if dys == 30: 
+#                     sheet.write(z+3, 30, '', border_right)
+#                     sheet.write(z+4, 30, '', border_right)
+#                     sheet.write(z+5, 30, '', border_right)                        
+#                     sheet.write(z+6, 30, '', border_right)
+#                     sheet.write(z+7, 30, '', border_right)
+#                     sheet.write(z+8, 30, '', border_right)
+#                     sheet.write(z+9, 30, '', border_right)
+#                     
+#                 if dys == 31:    
+#                     sheet.write(z+9, 31, '',border_bottom )
+# #                     sheet.write(z+9, 32, '',border_bottom )
+#                 
+#                 if dys == 31: 
+#                     sheet.write(z+3, 31, '', border_right)
+#                     sheet.write(z+4, 31, '', border_right)
+#                     sheet.write(z+5, 31, '', border_right)                        
+#                     sheet.write(z+6, 31, '', border_right)
+#                     sheet.write(z+7, 31, '', border_right)
+#                     sheet.write(z+8, 31, '', border_right)
+#                     sheet.write(z+9, 31, '', border_right)
+# #                     sheet.write(z+3, 32, '', border_right)
+#                 
+                
+                
+                
+                
+                 
+                timesheet_ids = timesheet_obj.search(cr, uid, [('period_start_dt','>=','2015-07-01'),('period_end_dt','>=','2015-07-31'),
+                                                               ('employee_id','in',[emp.id])])
+                 
+                if timesheet_ids:
+                    P = 0
+                    P_half = 0
+                    L = 0
+                    W = 0
+                    A = 0
+                    
+                    col = 1 
+                    for tsheet in timesheet_obj.browse(cr, uid, timesheet_ids):
+                        
+                        cr.execute("""
+                                select period_date::date from generate_series('"""+(tsheet.period_start_dt)+"""', 
+                                  '"""+(tsheet.period_end_dt)+"""', '1 day'::interval) period_date
+                                """)
+
+                        for r in cr.dictfetchall():
+                            date = datetime.strptime(r['period_date'], '%Y-%m-%d')
+                            punch_ids = punch_obj.search(cr, uid, [('punch_date','=', date),('timesheet_id','=', tsheet.id)])
+                            if punch_ids: 
+
+                                for punch in punch_obj.browse(cr, uid, punch_ids):
+                                        
+                                    # Searching for Paycode in master and updating Regular and OT
+                                    work_hours = 0.0
+                                    hrot = 0.00
+                                    if punch.timesheet_id.employee_id.time_rule_id.ot_rule_line:
+                                        st_dt = datetime.strptime(punch.start_time, '%Y-%m-%d %H:%M:%S')
+                                        start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
+                                        
+                                        for ot in punch.timesheet_id.employee_id.time_rule_id.ot_rule_line:
+                                            days = [str(x.name) for x in ot.weekday_ids]
+                                            start_day = calendar.day_name[st_dt.weekday()]
+                                            
+                                            if 'All Selected' in days or start_day in days:
+                                                paycode_id = ot.paycode_id.id
+                                                
+                                                if punch.units > ot.work_hours:
+                                                    work_hours = ot.work_hours
+                                                    hrot = punch.units - ot.work_hours
+                                                
+                                                else:
+                                                     work_hours = punch.units
+                                                     hrot = 0.0
+                                     
+                                    if punch.units >6:
+                                            sheet.write(row, col, 'P', centre)
+                                            P = P+1
+                                    else:
+                                        sheet.write(row, col, 'P1/2', centre)
+                                        P_half = P_half + 1
+                                         
+                                    if punch.type == 'daily':
+                                        sheet.write(row, col, 'L', centre)
+                                        L = L+1
+                                        
+                                    if punch.start_time:
+                                        start_time = punch.start_time
+                                        start_time = datetime.strptime(start_time,'%Y-%m-%d %H:%M:%S')
+                                        start_time = start_time.replace(tzinfo=pytz.utc).astimezone(local_tz)
+#                                         st_time = (parser.parse(''.join((re.compile('\d')).findall(datetime.strftime(start_time, '%Y-%m-%d %I:%M:%S' ))))).strftime('%I:%M:%S')
+                                        print "Time",start_time
+                                        sheet.write(row+1,col, start_time.strftime('%I:%M'), centre)
+                                        
+                                    if punch.end_time:
+                                        end_time = punch.end_time
+                                        end_time = datetime.strptime(end_time,'%Y-%m-%d %H:%M:%S' )
+                                        end_time = end_time.replace(tzinfo=pytz.utc).astimezone(local_tz)
+#                                         end_time = (parser.parse(''.join((re.compile('\d')).findall(datetime.strftime(end_time, '%Y-%m-%d %I:%M:%S' ))))).strftime('%I:%M:%S')
+                                        print "End Time",end_time
+                                        sheet.write(row+2,col, end_time.strftime('%I:%M'), centre)
+                                        
+                                    if punch.units:
+                                        sheet.write(row+3,col, punch.units, centre)
+                                        sheet.write(row+4,col, work_hours, centre)
+                                        sheet.write(row+5, col, hrot, centre)
+                                        
+                            if date.weekday() == 6: 
+                                sheet.write(row,col, 'W', centre)
+                                W = W + 1
+                                
+                            if not punch_ids and not date.weekday() == 6:
+                                sheet.write(row, col, 'A', centre)
+                                A = A + 1
+                            col = col+1        
+                        present = 'Present : ' +str(P)
+                        sheet.write(row+8, 1, present, bold_centre )   
+                        
+                        P_half = 'Half Day : ' +str(P_half)
+                        sheet.write(row+8, 3, P_half, bold_centre )
+                        
+                        absent = "Absent : " +str(A)
+                        sheet.write(row+8, 6, absent, bold_centre)
+                        
+                        leave = 'Holiday :' + str(L)
+                        sheet.write(row+8, 9, leave, bold_centre)
+                        
+                        week_off = "Weekly Off : " + str(W)
+                        sheet.write(row+8, 12, week_off, bold_centre)
+
+                        sheet.write(row+8, 15, "Days Payable : " +str(P), bold_centre)
+                    
+                row = row + 14
+                z = z+14          
+        workbook.close()   
+        fp = open(datafile, 'rb')
+        contents = fp.read()
+        os.remove(datafile) 
+        print "Yes"
+        return contents  
+        
+        
+
 
 hr_emp_timesheet()
 
@@ -1148,59 +1715,73 @@ class ir_rule(osv.osv):
     def class_domain(self, cr, uid, context=None):
         """ to get the domian based on the class mappings"""
         
-        vals = {}
-        cr.execute("select class_id from users_class1_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id1':data})
+        vals = []
+        for r in range(1, 11):
+            cr.execute("select class_id from users_class"+str(r)+"_rel where uid="+str(uid))
+            data = [x[0] for x in cr.fetchall()]
+            
+            if data:
+                if context.get('src_model_name') == 'hr.employee':
+                    vals.append(('class_id'+str(r), 'in', data))
+                else:
+                    vals.append(('employee_id.class_id'+str(r), 'in', data))
+                    
+            
+#         cr.execute("select class_id from users_class1_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             if context.get('src_model_name') == 'hr.employee':
+#                 vals.update({'class_id1':data})
+#             else:
+#                 vals.update({'employee_id.class_id1':data})
             
 
         
-        cr.execute("select class_id from users_class2_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id2':data})
-        
-        cr.execute("select class_id from users_class3_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id3':data})
-        
-        cr.execute("select class_id from users_class4_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id4':data})
-        
-        cr.execute("select class_id from users_class5_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id5':data})
-    
-        cr.execute("select class_id from users_class6_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id6':data})
-        
-        cr.execute("select class_id from users_class7_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id7':data})
-        
-        cr.execute("select class_id from users_class8_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id8':data})
-        
-        
-        cr.execute("select class_id from users_class9_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id9':data})
-    
-        cr.execute("select class_id from users_class10_rel where uid="+str(uid))
-        data = [x[0] for x in cr.fetchall() ]
-        if data:
-            vals.update({'class_id10':data})
+#         cr.execute("select class_id from users_class2_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id2':data})
+#         
+#         cr.execute("select class_id from users_class3_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id3':data})
+#         
+#         cr.execute("select class_id from users_class4_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id4':data})
+#         
+#         cr.execute("select class_id from users_class5_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id5':data})
+#     
+#         cr.execute("select class_id from users_class6_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id6':data})
+#         
+#         cr.execute("select class_id from users_class7_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id7':data})
+#         
+#         cr.execute("select class_id from users_class8_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id8':data})
+#         
+#         
+#         cr.execute("select class_id from users_class9_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id9':data})
+#     
+#         cr.execute("select class_id from users_class10_rel where uid="+str(uid))
+#         data = [x[0] for x in cr.fetchall() ]
+#         if data:
+#             vals.update({'class_id10':data})
         
         
         if vals:
@@ -1210,6 +1791,7 @@ class ir_rule(osv.osv):
     
     #overidden
     def domain_get(self, cr, uid, model_name, mode='read', context=None):
+        context = dict(context or {})
         dom = self._compute_domain(cr, uid, model_name, mode)
         if dom:
             if model_name in ('hr.employee', 'hr.holidays', 'hr.emp.timesheet'):
@@ -1234,15 +1816,12 @@ class ir_rule(osv.osv):
                             dom = ['|',('employee_id.user_id','=',uid),('employee_id.parent_id.user_id','=',uid)]
                     else:
                         #if users 
+                        context.update({'src_model_name':model_name})
                         domain = self.class_domain(cr, uid, context)
                         if domain:
-                            newvals = sorted(domain)
-                            
-                            if model_name == 'hr.employee':
-                                dom = [(newvals[-1] ,'in', domain[newvals[-1]])]
-                            
-                            else:
-                                dom = [('employee_id.'+newvals[-1] ,'in', domain[newvals[-1]])]
+                            print "domain,,,,,,,", domain
+                            dom = domain
+                           
                             
                 
             # _where_calc is called as superuser. This means that rules can
@@ -1272,6 +1851,6 @@ class hr_audit(osv.osv):
 hr_audit()
                 
                 
-    
+
 
     

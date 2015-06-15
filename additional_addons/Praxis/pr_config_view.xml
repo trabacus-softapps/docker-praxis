@@ -727,7 +727,7 @@ self.roll_overpay(cr, uid, context.get('active_ids',[]), context)
                         
                       
                             <group>
-                                <field name="paycode_ids" widget="many2many_tags" required="1" options="{'no_open':True, 'no_create':True}"/>
+                                <field name="paycode_ids" widget="many2many_tags"  options="{'no_open':True, 'no_create':True}" required="0"/>
                             </group>
                             <group>
                             <field name="ot_rule_line" nolabel="1">

@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<openerp>
+    <data>
+        
+        <!--Report Form View -->
+        <record id="view_pr_report_wiz_form" model="ir.ui.view">
+            <field name="name">pr.report.wiz.form</field>
+            <field name="model">pr.report.wiz</field>
+            <field name="arch" type="xml">
+                <form string="Report Criteria">
+                    <sheet>
+                        <notebook>
+                            <page string="Standard Criteria">
+                                <group>
+                                    <group>
+                                        <field name="class_id1" invisible="1" options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id2" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id3" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id4" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id5" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id6" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id7" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id8" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id9" invisible="1"  options='{"no_open": True, "no_create": True}'/>
+                                        <field name="class_id10" invisible="1" options='{"no_open": True, "no_create": True}'/>
+                                    </group>
+                                    
+                                    <group>
+                                        <field name="paygroup_id"/>
+                                        <field name="timegroup_id"/>
+                                        <field name="pri_supervisor"/>
+                                        <field name="supervisor_id"/>
+                                        <field name="employee_id" widget="many2many_tags"/>
+                                        <field name="active"/>
+                                        <field name="terminated"/>
+                                        <field name="loa"/>
+                                        <field name="pay_period" widget="radio"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                        
+                        
+                        <group>
+                            <field name="report_id" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
+                        </group>
+                        
+                    </sheet>
+                    <footer>
+                        <button name="print_report" string="View Report" type="object" class="oe_highlight"/>
+                        or
+                        <button string="Cancel" class="oe_link" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+        
+        
+        <record id="view_pr_report_wiz_action" model="ir.actions.act_window">
+            <field name="name">Reports</field>
+            <field name="res_model">pr.report.wiz</field>
+            <field name="view_type">form</field>
+            <field name="target">new</field>
+        </record>
+        
+        <record id="action_pr_report_wiz_view1" model="ir.actions.act_window.view">
+            <field eval="1" name="sequence"/>
+            <field name="view_mode">form</field>
+            <field name="view_id" ref="view_pr_report_wiz_form"/>
+            <field name="act_window_id" ref="view_pr_report_wiz_action"/>
+        </record>
+        
+        
+        
+        
+        <menuitem action="view_pr_report_wiz_action" id="report_wiz_action_id" sequence="4" parent="hr.menu_hr_reporting_timesheet"/>
+    </data>
+</openerp>

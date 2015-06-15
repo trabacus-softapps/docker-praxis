@@ -289,7 +289,7 @@ class hr_ot_rule(osv.osv):
     _columns = {
                 'work_hours'  : fields.float('Hours : Greater Than'),
                 'paycode_id'     : fields.many2one('hr.pay.codes','Pay Code'),
-                'weekday_ids' : fields.many2many('hr.weekdays','rule_weekdays_rel','rule_id','week_id', 'Days'),
+                'weekday_ids' : fields.many2many('hr.weekdays','rule_weekdays_rel','rule_id','week_id', 'Days',required="0"),
                 'rule_id'     : fields.many2one('hr.time.rule','Time Rule'),
                 }
     

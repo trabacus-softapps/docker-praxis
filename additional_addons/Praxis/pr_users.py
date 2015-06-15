@@ -37,6 +37,7 @@ class res_users(osv.osv):
             'class_ids8'        : fields.many2many('hr.class8','users_class8_rel','uid','class_id','Class8'),
             'class_ids9'        : fields.many2many('hr.class9','users_class9_rel','uid','class_id','Class9'),
             'class_ids10'       : fields.many2many('hr.class10','users_class10_rel','uid','class_id','Class10'),
+            'confirm_password'  : fields.char('Confirm Password', size=256)
             }
     
     _defaults = {
@@ -62,6 +63,25 @@ class res_users(osv.osv):
                      
             res['arch'] = etree.tostring(doc)
         return res
+    
+    def create(self, cr, uid, vals, context=None):
+        context = dict(context or {})
+        
+        if vals.get('password') != vals.get('confirm_password'):
+            raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
+        
+        return super(res_user, self).create(cr, uid, vals, context=context)
+
+    def write(self, cr, uid, ids, vals, context=None):
+        context = dict(context or {})
+         
+        for case in self.browse(cr, uid, ids):
+            if vals.get('password',case.password) != vals.get('confirm_password', case.confirm_password):
+               raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
+        
+        return super(res_users, self).write(cr, uid, ids, vals, context)
+         
+             
     
 
         

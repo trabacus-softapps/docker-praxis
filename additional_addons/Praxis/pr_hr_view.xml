@@ -192,6 +192,13 @@
                 <field name="name" position="replace">
                     <field name="display_name"/>
                 </field>
+                
+                <field name="parent_id" position="after">
+                    <field name="log_in"/>
+                    <field name="log_out"/>
+                    <button name="login" icon="gtk-yes" attrs="{'invisible':[('log_in','!=',True)]}"/>
+                    <button name="logout" icon="gtk-no" attrs="{'invisible':[('log_out','!=',True)]}"/>
+                </field>
             </field>
         </record>
         
@@ -258,7 +265,7 @@
                         </page>
                         
                         <page string = "Audit">
-                            <field name="audit_ids" nolabel="1" editable="top">
+                            <field name="audit_ids" nolabel="1" editable="top" readonly="1">
                                 <tree>
                                     <field name="punch_date"/>
                                     <field name="change_time"/>

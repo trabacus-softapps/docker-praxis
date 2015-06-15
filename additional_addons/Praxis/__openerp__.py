@@ -22,6 +22,7 @@
              'data/pr_employee_master_data.xml',
              'pr_dashboard.xml',
              'pr_users.xml',
+             'wizard/pr_report_wiz.xml',
              #'widget.xml'
        
     ],
