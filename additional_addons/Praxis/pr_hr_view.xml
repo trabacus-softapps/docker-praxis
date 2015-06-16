@@ -193,15 +193,50 @@
                     <field name="display_name"/>
                 </field>
                 
-                <field name="parent_id" position="after">
+                <!--<field name="parent_id" position="after">
                     <field name="log_in"/>
                     <field name="log_out"/>
                     <button name="login" icon="gtk-yes" attrs="{'invisible':[('log_in','!=',True)]}"/>
                     <button name="logout" icon="gtk-no" attrs="{'invisible':[('log_out','!=',True)]}"/>
-                </field>
+                </field>-->
             </field>
         </record>
         
+        
+        <!-- Hr Tree VIew New -->
+        <record id="pr_view_status_emp_tree" model="ir.ui.view">
+            <field name="name">hr.status.tree</field>
+            <field name="model">hr.employee</field>
+            <field name="arch" type="xml">
+                <tree string="Status Board" colors="green:state == 'login';red:state =='logout'">
+                    <field name="state" invisible="1"/>
+                    <field name="display_name"/>
+                    <field name="identification_id"/>
+                    <field name="log_in" invisible="1"/>
+                    <field name="log_out" invisible="1"/>
+                    <button name="login" icon="gtk-yes" attrs="{'invisible':[('log_in','!=',True)]}"/>
+                    <button name="logout" icon="gtk-no" attrs="{'invisible':[('log_out','!=',True)]}"/>
+                </tree>
+            </field>
+        </record>
+        
+        
+        <record id="pr_open_view_employee_list_my" model="ir.actions.act_window">
+            <field name="name">Employees</field>
+            <field name="res_model">hr.employee</field>
+            <field name="view_type">form</field>
+            <field name="view_mode">tree</field>
+            
+        </record>
+        
+        
+        <record model="ir.actions.act_window.view" id="action_view_emp_status_tree">
+            <field name="sequence" eval="1"/>
+            <field name="view_mode">tree</field>
+            <field name="view_id" ref="pr_view_status_emp_tree"/>
+            <field name="act_window_id" ref="pr_open_view_employee_list_my"/>
+        </record>
+       
         
         <!--****************************************************************************************************
                             HR Time Sheet Details

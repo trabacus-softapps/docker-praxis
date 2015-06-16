@@ -106,6 +106,7 @@
                         </column>
                         <column>
                             <action name="%(avg_work_time_analysis_action)d" string="Average Work Hours"/>
+                            <action name="%(pr_open_view_employee_list_my)d" string="Status"/>
                         </column>
                     </board>
                 </form>

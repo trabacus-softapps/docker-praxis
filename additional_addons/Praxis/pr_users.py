@@ -64,22 +64,22 @@ class res_users(osv.osv):
             res['arch'] = etree.tostring(doc)
         return res
     
-    def create(self, cr, uid, vals, context=None):
-        context = dict(context or {})
-        
-        if vals.get('password') != vals.get('confirm_password'):
-            raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
-        
-        return super(res_user, self).create(cr, uid, vals, context=context)
-
-    def write(self, cr, uid, ids, vals, context=None):
-        context = dict(context or {})
-         
-        for case in self.browse(cr, uid, ids):
-            if vals.get('password',case.password) != vals.get('confirm_password', case.confirm_password):
-               raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
-        
-        return super(res_users, self).write(cr, uid, ids, vals, context)
+#     def create(self, cr, uid, vals, context=None):
+#         context = dict(context or {})
+#         
+#         if vals.get('password') != vals.get('confirm_password'):
+#             raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
+#         
+#         return super(res_user, self).create(cr, uid, vals, context=context)
+# 
+#     def write(self, cr, uid, ids, vals, context=None):
+#         context = dict(context or {})
+#          
+#         for case in self.browse(cr, uid, ids):
+#             if vals.get('password',case.password) != vals.get('confirm_password', case.confirm_password):
+#                raise osv.except_osv(_('Warning!'), _('Password Mismatch'))
+#         
+#         return super(res_users, self).write(cr, uid, ids, vals, context)
          
              
     

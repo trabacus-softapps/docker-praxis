@@ -30,11 +30,13 @@
                                         <field name="timegroup_id"/>
                                         <field name="pri_supervisor"/>
                                         <field name="supervisor_id"/>
-                                        <field name="employee_id" widget="many2many_tags"/>
+                                        <field name="employee_ids" widget="many2many_tags"/>
                                         <field name="active"/>
                                         <field name="terminated"/>
                                         <field name="loa"/>
                                         <field name="pay_period" widget="radio"/>
+                                        <field name="start_date" attrs="{'invisible':[('pay_period','in',('current','next'))], 'required':[('pay_period','=','range')]}"/>
+                                        <field name="end_date" attrs="{'invisible':[('pay_period','in',('current','next'))],  'required':[('pay_period','=','range')]}"/>
                                     </group>
                                 </group>
                             </page>
@@ -42,7 +44,7 @@
                         
                         
                         <group>
-                            <field name="report_id" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
+                            <field name="report_id" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
                         </group>
                         
                     </sheet>

@@ -51,7 +51,7 @@ class pr_report_wiz(osv.osv_memory):
                 'timegroup_id'     : fields.many2one('hr.time.rule','Time Group'),
                 'pri_supervisor'   : fields.boolean('Primary Supervisor'),
                 'supervisor_id'    : fields.many2one('hr.employee','Supervisor'),
-                'employee_id'      : fields.many2many('hr.employee','report_employee_rel','report_id','employee_id',"Employee's"),
+                'employee_ids'      : fields.many2many('hr.employee','report_employee_rel','report_id','employee_id',"Employee's"),
                 'active'           : fields.boolean('Active'),
                 'terminated'       : fields.boolean('Terminated'),
                 'loa'              : fields.boolean('LOA'),
@@ -94,17 +94,58 @@ class pr_report_wiz(osv.osv_memory):
             name = ''
             data = {}
             sale_obj = self.pool.get("sale.order")
-            report_name = 'test'
+            
+            report_name = case.report_id.name
             data['model'] = context.get('hr.emp.timesheet', 'ir.ui.menu')
             condition = []
+            
+            for r in range(1, 11):
+                if case['class_id'+str(r)]:
+                    condition.append(('employee_id.class_id'+str(r),'=',case['class_id'+str(r)].id))
+            
+            if case.paygroup_id :
+                condition.append(('employee_id.pay_group_id','=',case.paygroup_id.id))
+            
+            if case.timegroup_id :
+                condition.append(('employee_id.time_rule_id','=',case.timegroup_id.id))
+                
+            if case.supervisor_id :
+                condition.append(('employee_id.parent_id','=',case.supervisor_id.id))
+                
+            if case.employee_ids:
+                condition.append(('employee_id','in',[x.id for x in case.employee_ids]))
+            
             
             
             
             if case.pay_period == 'current':
-                sheet_ids = ts_obj.search(cr , uid, [('period_start_dt','<=',punch_date),('period_end_dt','>=',punch_date)]) 
+                condition.extend([('period_start_dt','<=',punch_date),('period_end_dt','>=',punch_date)])
+                start_date = today.replace(day=1).strftime('%Y-%m-%d')
+                end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1]).strftime('%Y-%m-%d')
+                
+                print "start_date, end_date", start_date, end_date
+            
+            elif case.pay_period == 'next':
+                punch_date = today + relativedelta(months=1)
+                start_date = punch_date.replace(day=1).strftime('%Y-%m-%d')
+                end_date = punch_date.replace(day=calendar.monthrange(punch_date.year, punch_date.month)[1]).strftime('%Y-%m-%d')
+                
+                condition.extend([('period_start_dt','<=',punch_date.strftime('%Y-%m-%d')),('period_end_dt','>=',punch_date.strftime('%Y-%m-%d'))])
+            
+            else:
+                condition.extend([('period_start_dt','>=',case.start_date),('period_end_dt','<=',case.end_date)])
+                start_date = case.start_date
+                end_date = case.end_date
+                
+            # condition to check all combination    
+            sheet_ids = ts_obj.search(cr , uid, condition)
+            
+            print "sheet_ids............", sheet_ids, report_name 
             
             data['variables'] = {
                                  'sheet_ids' : sheet_ids ,
+                                 'start_date' : start_date,
+                                 'end_date'   : end_date
                                  }
             
             data['ids'] = context.get('active_ids',[])
