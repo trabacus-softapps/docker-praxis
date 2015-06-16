@@ -1130,13 +1130,13 @@ class hr_emp_timesheet(osv.osv):
         res = super(hr_emp_timesheet, self).write(cr, uid, ids, vals, context)
         return res
             
-            
-    def dummy_button(self,cr, uid, ids, context=None):
-        status_obj = self.pool.get("monthly.status")
-        
-        status_obj.generate_montly_status_xls(cr, uid, ids,context)
-        
-        return True
+#             
+#     def dummy_button(self,cr, uid, ids, context=None):
+#         status_obj = self.pool.get("monthly.status")
+#         
+#         status_obj.generate_montly_status_xls(cr, uid, ids,context)
+#         
+#         return True
     
     def get_file(self, cr, uid, report_data, context=None):
         sheet_ids = report_data['variables']['sheet_ids']
@@ -1209,7 +1209,8 @@ class hr_emp_timesheet(osv.osv):
             col_value = [slno, case.employee_id.identification_id, case.employee_id.last_name + ' ' +case.employee_id.name , '' ]
             
             punch_date = datetime.strptime(case.period_start_dt, '%Y-%m-%d')
-            for r in range(1, calendar.monthrange(punch_date.year, punch_date.month +1)[1]):
+            for r in range(1, ((calendar.monthrange(punch_date.year, punch_date.month)[1]) + 1)):
+                
                 punch_date = punch_date.replace(day = r)
                 punch_ids = punch_obj.search(cr, uid, [('timesheet_id','=', case.id),('punch_date','=',punch_date)])
                 
@@ -1519,7 +1520,7 @@ class hr_emp_timesheet(osv.osv):
                             # Searching for Paycode in master and updating Regular and OT
                             work_hours = 0.0
                             hrot = 0.00
-                            if punch.timesheet_id.employee_id.time_rule_id.ot_rule_line:
+                            if punch.timesheet_id.employee_id.time_rule_id.ot_rule_line and punch.type != 'daily':
                                 st_dt = datetime.strptime(punch.start_time, '%Y-%m-%d %H:%M:%S')
                                 start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
                                 
