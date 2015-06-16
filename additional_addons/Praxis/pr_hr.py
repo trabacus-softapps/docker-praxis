@@ -1143,7 +1143,7 @@ class hr_emp_timesheet(osv.osv):
         start_date = report_data['variables']['start_date']
         end_date = report_data['variables']['end_date']
         
-        datafile = '/home/serveradmin/Desktop/test.xlsx'
+        datafile = 'test.xlsx'
         workbook = Workbook(datafile)
         sheet = workbook.add_worksheet()
         punch_obj = self.pool.get('hr.punch')
