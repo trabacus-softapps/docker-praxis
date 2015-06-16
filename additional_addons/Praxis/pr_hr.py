@@ -963,11 +963,11 @@ class hr_emp_timesheet(osv.osv):
                         
                         elif p.start_time and not p.end_time:
                             end_time = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S') + relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time, 'act_end_time':end_time})
+                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_end_time':end_time.strftime('%Y-%m-%d %H:%M:%S')})
                         
                         elif p.end_time and not p.start_time:
                             start_time = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S') - relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time, 'act_start_time': start_time})
+                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_start_time': start_time.strftime('%Y-%m-%d %H:%M:%S')})
                             
                             
                     # to  get the time rounding
@@ -1515,7 +1515,7 @@ class hr_emp_timesheet(osv.osv):
                     if punch_ids: 
 
                         for punch in punch_obj.browse(cr, uid, punch_ids):
-                                
+                            units = punch.units    
                             # Searching for Paycode in master and updating Regular and OT
                             work_hours = 0.0
                             hrot = 0.00
@@ -1523,12 +1523,14 @@ class hr_emp_timesheet(osv.osv):
                                 st_dt = datetime.strptime(punch.start_time, '%Y-%m-%d %H:%M:%S')
                                 start_time = st_dt.replace(tzinfo=pytz.utc).astimezone(local_tz)
                                 
-                                for ot in punch.timesheet_id.employee_id.time_rule_id.ot_rule_line:
+                                # Considering only first line in OT or Regular Lines (First Line Always should be Regular)
+                                for ot in punch.timesheet_id.employee_id.time_rule_id.ot_rule_line[0]:
                                     days = [str(x.name) for x in ot.weekday_ids]
                                     start_day = calendar.day_name[st_dt.weekday()]
                                     
                                     if 'All Selected' in days or start_day in days:
                                         paycode_id = ot.paycode_id.id
+                                        
                                         
                                         if punch.units > ot.work_hours:
                                             work_hours = ot.work_hours
