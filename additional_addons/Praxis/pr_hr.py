@@ -114,7 +114,7 @@ class hr_employee(osv.osv):
         for case in self.browse(cr, uid, ids):
             res[case.id]={
                           'log_in'   : False,
-                          'log_out'  : False,
+                          'log_out'  : True,
                           'state' : 'absent'
                           }
             
@@ -128,10 +128,12 @@ class hr_employee(osv.osv):
                     
                     if p.end_time :
                         res[case.id]['log_out'] = True
+                        res[case.id]['log_in'] = False
                         res[case.id]['state'] = 'logout'
                     
                     if not p.end_time and p.start_time:
                         res[case.id]['log_in'] = True
+                        res[case.id]['log_out'] = False
                         res[case.id]['state'] = 'login'
             
         return res
@@ -494,6 +496,8 @@ class hr_punch(osv.osv):
                 'timesheet_id' : fields.many2one('hr.emp.timesheet','Time sheet Punch'),
                 'type' : fields.selection([('daily','Daily'),('punch','Punch')], 'Type'),
                 'check' : fields.boolean('Check'),
+                'multi_punch_lines' : fields.one2many("multi.punch", 'punch_id', "Multi Punch Lines"),
+                
                 }
     
     def onchange_date(self, cr, uid, ids, punch_date, period_start_dt, period_end_dt, context=None):
@@ -663,16 +667,16 @@ class hr_punch(osv.osv):
                 if 'units' in vals:
                     
                     if case.units:
-                        old_units = case.units
+                        old_units = round(case.units,2)
                     
                     if 'units' in vals :
-                        new_units = vals.get('units')
+                        new_units = round(vals.get('units'),2)
                     
                     if old_units != new_units:
                         
                         audit_vals.update({
-                                       'original_value':case.units or 0.00,
-                                       'new_value' : vals.get('units',0.00),
+                                       'original_value':old_units or 0.00,
+                                       'new_value' : new_units,
                                        'column_name' : 'Units',
                                        
                                        })
@@ -1138,10 +1142,46 @@ class hr_emp_timesheet(osv.osv):
 #         
 #         return True
     
+
+    def build_header(self, start_date, end_date, workbook, sheet, datetime, row, text_centre, bold_centre, border_style,slno):
+        start_time = datetime.strptime(start_date, '%Y-%m-%d')
+        end_time = datetime.strptime(end_date, '%Y-%m-%d')
+        
+        sheet.write(row, 0, 'Unit')
+        sheet.write(row, 5, 'EmployeeType : Temporary')
+        sheet.write(row, 15,'Pay Period From : ' + start_time.strftime('%d-%m-%Y') + '   TO   ' + end_time.strftime('%d-%m-%Y'))
+        
+        row = row + 1
+        sheet.write(row, 0, '#', bold_centre)
+        sheet.write(row, 1, 'Emp No.', bold_centre)
+        sheet.write(row, 2, 'Name', bold_centre)
+        sheet.write(row, 3, 'Designation', bold_centre)
+        i = 4
+        j = 2
+        k = 0
+        
+        for dt in rrule.rrule(rrule.DAILY, dtstart=datetime.strptime(start_date, '%Y-%m-%d'), until=datetime.strptime(end_date, '%Y-%m-%d')):
+            sheet.write(row, i, dt.strftime('%d'), bold_centre)
+            i = i + 1
+        
+        sheet.write(row, i, 'Holiday(H)', bold_centre)
+        i = i + 1
+        sheet.write(row, i, 'Absent(A)', bold_centre)
+        i = i + 1
+        sheet.write(row, i, 'Present(P)', bold_centre)
+        i = i + 1
+        sheet.write(row, i, 'Leave(L)', bold_centre)
+        i = i + 1
+        sheet.write(row, i, 'WeeklyOff(W)', bold_centre)
+        i = i + 1
+        sheet.write(row, i, 'Payable Days', bold_centre)
+        return slno, j, k, row
+
     def get_file(self, cr, uid, report_data, context=None):
         sheet_ids = report_data['variables']['sheet_ids']
         start_date = report_data['variables']['start_date']
         end_date = report_data['variables']['end_date']
+        group_by = report_data['variables']['emp_group_by']
         
         datafile = 'test.xlsx'
         workbook = Workbook(datafile)
@@ -1150,8 +1190,10 @@ class hr_emp_timesheet(osv.osv):
         holiday_obj = self.pool.get('hr.emp.holiday')
         
         today = datetime.now()
+        class_id = False
+        row = 0
+        header= False
         
-        vals = {}
         sheet.set_column('A:A', 5)
         sheet.set_column('B:B', 20)
         sheet.set_column('C:C', 20)
@@ -1159,46 +1201,41 @@ class hr_emp_timesheet(osv.osv):
         sheet.set_column('E:AF', 5)
         sheet.set_column('AI:AZ', 15)
         
-        sheet.write(0,0,'Unit')
-        sheet.write(0,5,'EmployeeType : Temporary')
-        
-        text_centre = workbook.add_format({'align': 'centre','valign':'top'})
-        
-        bold_centre = workbook.add_format({'align': 'centre'})
+        text_centre = workbook.add_format({'align':'centre', 'valign':'top'})
+        bold_centre = workbook.add_format({'align':'centre'})
         bold_centre.set_bg_color('5C70A4')
         bold_centre.set_font_color('white')
         bold_centre.set_border()
-        
-        border_style = workbook.add_format({'align': 'centre'})
+        border_style = workbook.add_format({'align':'centre'})
         border_style.set_border()
         
-        sheet.write(1, 0, '#', bold_centre)
-        sheet.write(1, 1, 'Emp No.', bold_centre)
-        sheet.write(1, 2, 'Name', bold_centre)
-        sheet.write(1, 3, 'Designation', bold_centre)
-        
-        i= 4
-        j=2
-        k =0
-        slno = 0
-        for dt in rrule.rrule(rrule.DAILY, dtstart=datetime.strptime(start_date, '%Y-%m-%d'),until=datetime.strptime(end_date,  '%Y-%m-%d')):
-            sheet.write(1,i, dt.strftime('%d'), bold_centre)
-            i = i+1
-        
-        sheet.write(1,i, 'Holiday(H)',bold_centre)
-        i = i+1
-        sheet.write(1,i, 'Absent(A)',bold_centre)
-        i = i+1
-        sheet.write(1,i, 'Present(P)',bold_centre)
-        i = i+1
-        sheet.write(1,i, 'Leave(L)',bold_centre)
-        i = i+1
-        sheet.write(1,i, 'WeeklyOff(W)',bold_centre)
-        i = i+1
-        sheet.write(1,i, 'Payable Days',bold_centre)
-        
-        
+        vals = {}
+        row_pos = 2
         for case in self.browse(cr, uid, sheet_ids):
+            
+            if group_by and not class_id:
+                slno = 0
+                class_id = case.employee_id[str(group_by)].id
+                slno, j, k, row = self.build_header(start_date, end_date, workbook, sheet, datetime, row, text_centre, bold_centre, border_style,slno )
+                header = True
+            
+            if group_by and class_id != case.employee_id[str(group_by)].id :
+                slno = 0
+                row = row + 2
+                row_pos = row + 2
+                slno, j, k, row = self.build_header(start_date, end_date, workbook, sheet, datetime, row,text_centre, bold_centre, border_style, slno)
+                header = True
+            
+            
+            if not header :
+                # for space
+                slno = 0
+                row = row
+                slno, j, k, row = self.build_header(start_date, end_date, workbook, sheet, datetime, row, text_centre, bold_centre, border_style, slno )
+                header = True
+            
+        
+        
             p_cnt = 0
             a_cnt = 0
             h_cnt = 0
@@ -1206,7 +1243,7 @@ class hr_emp_timesheet(osv.osv):
             wo_cnt = 0
             slno = slno + 1
             
-            col_value = [slno, case.employee_id.identification_id, case.employee_id.last_name + ' ' +case.employee_id.name , '' ]
+            col_value = [slno, case.employee_id.identification_id, case.employee_id.name + ' ' +case.employee_id.last_name , '' ]
             
             punch_date = datetime.strptime(case.period_start_dt, '%Y-%m-%d')
             for r in range(1, ((calendar.monthrange(punch_date.year, punch_date.month)[1]) + 1)):
@@ -1250,19 +1287,24 @@ class hr_emp_timesheet(osv.osv):
                 col_value.append(status)
             # building The vals
             col_value.extend([h_cnt, a_cnt, p_cnt, l_cnt, wo_cnt, (p_cnt + wo_cnt)])
+            vals={}
             vals[case.id] = list(col_value)
+            row = row + 1
+            
+            if group_by:
+                class_id = case.employee_id[str(group_by)].id
                 
         
-        j = 2 # starting row position
-        for v in vals.values():
-            if 'P \n 1/2' in v:
-                sheet.set_row(j, 30)
-            
-            k = 0 # starting col position
-            for data in v:
-                sheet.write(j,k, data, text_centre)
-                k= k+1
-            j = j+1
+             # starting row position
+            for v in vals.values():
+                if 'P \n 1/2' in v:
+                    sheet.set_row(j, 30)
+                 
+                k = 0 # starting col position
+                for data in v:
+                    sheet.write(row_pos,k, data, text_centre)
+                    k= k+1
+                row_pos = row_pos + 1
             
                             
            
@@ -1604,6 +1646,20 @@ class hr_emp_timesheet(osv.osv):
 
 
 hr_emp_timesheet()
+
+class multi_punch(osv.osv):
+    _name = "multi.punch"
+     
+    _columns = {
+                'punch_id'  :   fields.many2one("hr.punch", "Punch ID"),
+                'multi_punch_time'  :   fields.datetime("Punch Timings"),   
+      
+                }
+    _order = "multi_punch_time"
+     
+multi_punch()
+
+
 
 
 class hr_holidays(osv.osv):

@@ -106,7 +106,7 @@
                         </column>
                         <column>
                             <action name="%(avg_work_time_analysis_action)d" string="Average Work Hours"/>
-                            <action name="%(pr_open_view_employee_list_my)d" string="Status"/>
+                            <!--<action name="%(pr_open_view_employee_list_my)d" string="Status"/>-->
                         </column>
                     </board>
                 </form>
@@ -126,6 +126,11 @@
             sequence="4"
             parent="base.menu_reporting_dashboard"
             action="pr_action_time_board"/>
+        
+        <menuitem id = "employee_status_board_id"
+            sequence = "10"
+            parent = "base.menu_reporting_dashboard"
+            action="pr_open_view_employee_list_my" />
        
      <!--   <menuitem id="action_pr_time_board_id1"
             sequence="100"

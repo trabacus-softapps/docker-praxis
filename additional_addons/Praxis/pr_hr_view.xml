@@ -74,6 +74,7 @@
                         <field name="active"/>
                         <field name="salaried"/>
                         <field name="employee_type_id" options="{'no_create':True,'no_open':True}"/>
+                        <field name="job_id" options="{'no_create':True,'no_open':True}" string="Job Code"/>
                         <field name="parent_id" options="{'no_create':True,'no_open':True}"/>
                         <field name="parent_ids" widget="many2many_tags" options="{'no_create':True,'no_open':True}"/>
                         
@@ -208,24 +209,25 @@
             <field name="name">hr.status.tree</field>
             <field name="model">hr.employee</field>
             <field name="arch" type="xml">
-                <tree string="Status Board" colors="green:state == 'login';red:state =='logout'">
+                <tree string="Status Board">
                     <field name="state" invisible="1"/>
                     <field name="display_name"/>
                     <field name="identification_id"/>
                     <field name="log_in" invisible="1"/>
                     <field name="log_out" invisible="1"/>
-                    <button name="login" icon="gtk-yes" attrs="{'invisible':[('log_in','!=',True)]}"/>
-                    <button name="logout" icon="gtk-no" attrs="{'invisible':[('log_out','!=',True)]}"/>
+                    <button name="login" string="Login" icon="gtk-yes" attrs="{'invisible':[('log_in','!=',True)]}" class="oe_list_header_char oe_sortable"/>
+                    <button name="logout" string="Logout" icon="gtk-no" attrs="{'invisible':[('log_out','!=',True)]}" class="oe_list_header_char oe_sortable"/>
                 </tree>
             </field>
         </record>
         
         
         <record id="pr_open_view_employee_list_my" model="ir.actions.act_window">
-            <field name="name">Employees</field>
+            <field name="name">Status Board</field>
             <field name="res_model">hr.employee</field>
             <field name="view_type">form</field>
             <field name="view_mode">tree</field>
+            <field name="search_view_id" ref="hr.view_employee_filter"/>
             
         </record>
         
@@ -261,7 +263,7 @@
                         <notebook>
                             <page string = "Punch">
                                 <field name="punch_ids" context="{'default_type':'punch'}">
-                                    <tree editable="top">
+                                    <tree string="Punch Lines">
                                         <field name="punch_date" required="1" attrs="{'readonly':[('type','=','daily')]}" />
 <!--                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
 -->                                               
@@ -283,6 +285,15 @@
                                             <field name="end_time"/>
                                             <field name="units"/>
                                             <field name="notes"/>
+                                        </group>
+                                        
+                                        <group>
+                                            <field name="multi_punch_lines">
+                                                <tree editable="bottom">
+                                                    <field name="multi_punch_time"/>
+                                                </tree>
+                                            </field>
+                                            
                                         </group>
                                     </form>
                                 </field>

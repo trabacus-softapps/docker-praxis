@@ -32,23 +32,37 @@
                                         <field name="supervisor_id"/>
                                         <field name="employee_ids" widget="many2many_tags"/>
                                         <field name="active"/>
-                                        <field name="terminated"/>
-                                        <field name="loa"/>
+                                        <field name="inactive"/>
                                         <field name="pay_period" widget="radio"/>
                                         <field name="start_date" attrs="{'invisible':[('pay_period','in',('current','next'))], 'required':[('pay_period','=','range')]}"/>
                                         <field name="end_date" attrs="{'invisible':[('pay_period','in',('current','next'))],  'required':[('pay_period','=','range')]}"/>
                                     </group>
                                 </group>
                             </page>
+                            
+                            <page string="Specific Criteria">
+                                <group col="4" cospan="2">
+                                    <field name="emp_sort"/><newline/>
+                                    <field name="emp_group_by"/>
+                                </group>
+                                    
+                            </page>
                         </notebook>
                         
                         
-                        <group>
+                        <!--<group>
                             <field name="report_id" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
-                        </group>
+                        </group>-->
                         
                     </sheet>
                     <footer>
+                        <div>
+                            Report
+                        </div>
+                        <group class="oe_left oe_form" col="3"> 
+                            <field name="report_id" nolabel = "1" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
+                        </group>
+                        
                         <button name="print_report" string="View Report" type="object" class="oe_highlight"/>
                         or
                         <button string="Cancel" class="oe_link" special="cancel"/>

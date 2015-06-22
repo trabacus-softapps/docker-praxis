@@ -36,6 +36,14 @@ from openerp.osv.orm import setup_modifiers
 
 class pr_report_wiz(osv.osv_memory):
     _name = 'pr.report.wiz'
+    
+    def _class_id_get(self, cr, uid, context=None):
+        mapping_obj = self.pool.get('hr.class.mapping')
+        result = []
+        for m in mapping_obj.browse(cr, uid, mapping_obj.search(cr, uid, [])):
+            result.append((m.name[:-1] + '_id'+ m.name[-1:], m.label))
+        return result
+    
     _columns = {
                 'class_id1'        : fields.many2one('hr.class1','Class1'),
                 'class_id2'        : fields.many2one('hr.class2','Class2'),
@@ -48,20 +56,23 @@ class pr_report_wiz(osv.osv_memory):
                 'class_id9'        : fields.many2one('hr.class9','Class9'),
                 'class_id10'       : fields.many2one('hr.class10','Class10'),
                 'paygroup_id'      : fields.many2one('hr.pay.group','Pay Group'),
-                'timegroup_id'     : fields.many2one('hr.time.rule','Time Group'),
+                'timegroup_id'     : fields.many2one('hr.time.rule','Time Rule'),
                 'pri_supervisor'   : fields.boolean('Primary Supervisor'),
                 'supervisor_id'    : fields.many2one('hr.employee','Supervisor'),
-                'employee_ids'      : fields.many2many('hr.employee','report_employee_rel','report_id','employee_id',"Employee's"),
+                'employee_ids'     : fields.many2many('hr.employee','report_employee_rel','report_id','employee_id',"Employee's"),
                 'active'           : fields.boolean('Active'),
-                'terminated'       : fields.boolean('Terminated'),
+                'inactive'         : fields.boolean('In Active'),
                 'loa'              : fields.boolean('LOA'),
                 'pay_period'       : fields.selection([('current','Current Pay Period'),('next','Next Pay Period'),('range','Date Range')],'Pay Period'),
                 'start_date'       : fields.date('From'),
                 'end_date'         : fields.date('To'),
                 'report_id'        : fields.many2one('ir.actions.report.xml','Report'),
+                'emp_sort'         : fields.selection([('emp_no','Employee Number'),('emp_name','Employee Name')],'Sort By'),
+                'emp_group_by'            : fields.selection(_class_id_get, 'Group By'),
                 }
     _defaults = {
-                 'pay_period' : 'current'
+                 'pay_period' : 'current',
+                 'active'  : True,
                  }
     
     
@@ -87,13 +98,20 @@ class pr_report_wiz(osv.osv_memory):
     def print_report(self, cr, uid, ids, context=None):
         today =datetime.now()
         punch_date = today.strftime('%Y-%m-%d')
-        ts_obj = self.pool.get('hr.emp.timesheet') 
+        ts_obj = self.pool.get('hr.emp.timesheet')
+        mapping_obj = self.pool.get("hr.class.mapping")
+        group_by = '' 
+        sort_by = ''
+        order = ''
+        cond = ''
         
         for case in self.browse(cr, uid, ids):
             report_name = ''
             name = ''
             data = {}
             sale_obj = self.pool.get("sale.order")
+            
+           
             
             report_name = case.report_id.name
             data['model'] = context.get('hr.emp.timesheet', 'ir.ui.menu')
@@ -123,7 +141,6 @@ class pr_report_wiz(osv.osv_memory):
                 start_date = today.replace(day=1).strftime('%Y-%m-%d')
                 end_date = today.replace(day=calendar.monthrange(today.year, today.month)[1]).strftime('%Y-%m-%d')
                 
-                print "start_date, end_date", start_date, end_date
             
             elif case.pay_period == 'next':
                 punch_date = today + relativedelta(months=1)
@@ -133,19 +150,92 @@ class pr_report_wiz(osv.osv_memory):
                 condition.extend([('period_start_dt','<=',punch_date.strftime('%Y-%m-%d')),('period_end_dt','>=',punch_date.strftime('%Y-%m-%d'))])
             
             else:
-                condition.extend([('period_start_dt','>=',case.start_date),('period_end_dt','<=',case.end_date)])
-                start_date = case.start_date
-                end_date = case.end_date
+                if case.report_id.name != 'Late In Early Out':
+                    condition.extend([('period_start_dt','>=',case.start_date),('period_end_dt','<=',case.end_date)])
+                    start_date = case.start_date
+                    end_date = case.end_date
                 
-            # condition to check all combination    
+                else:
+                    case.report_id.name == 'Late In Early Out'
+                    st_dt = datetime.strptime(case.start_date, '%Y-%m-%d')
+                    from_date = st_dt.replace(day=1).strftime('%Y-%m-%d')
+                    to_date = st_dt.replace(day=calendar.monthrange(st_dt.year, st_dt.month)[1]).strftime('%Y-%m-%d')
+                    
+                    condition.extend([('period_start_dt','>=',from_date),('period_end_dt','>=',to_date)])
+                    start_date = case.start_date
+                    end_date = case.end_date
+             
+            
+            
+            if case.emp_group_by:
+                order = 'employee_id.'+case.emp_group_by + ' asc'
+                
+            
+            if case.emp_sort :
+                sort_by = 'employee_id.'+case.emp_sort + ' asc'
+                if order :
+                    order = order + sort_by
+                else:
+                    order = sort_by
+            
             sheet_ids = ts_obj.search(cr , uid, condition)
+                    
             
-            print "sheet_ids............", sheet_ids, report_name 
+            select = """
+            select 
+                  t.id as ts_id
+                , h.id 
+                , h.name_related as emp_name
+                , h.identification_id as emp_no
+            """
             
+            join = """
+                    from hr_employee h 
+                    inner join resource_resource r on r.id = h.resource_id
+                    inner join hr_emp_timesheet t on t.employee_id = h.id """
+            
+            if len(sheet_ids) > 1:
+                cond = """ where t.id in """+ str(tuple(sheet_ids))
+            else:
+                cond = """ where t.id in ("""+ str(sheet_ids[0]) + """)"""
+            
+            sheet_ids= []
+                    
+            
+            if  case.emp_group_by:
+                select = select + ",c.id as class_id , c.name as class_name"
+                join = join + """ left outer join hr_"""+case.emp_group_by.replace('_id','')+" c on c.id = h."+case.emp_group_by
+                cond = cond + " order by class_id"
+                
+                label = str(case.emp_group_by.replace('_id',''))
+                map_ids =  mapping_obj.search(cr, uid, [('name','=',label)])
+                if map_ids:
+                    map = mapping_obj.browse(cr, uid, map_ids)
+                    map_label = map.label
+            
+            if case.emp_sort:
+                cond = cond + ","+ case.emp_sort if 'order' in cond else  cond+ " order by "+ case.emp_sort
+                
+            
+            sqlstr = select + str(join) + str(cond)
+            print "sqlstr", sqlstr
+            
+            cr.execute(sqlstr)
+            for c in cr.fetchall():
+                sheet_ids.append(c[0])
+                
+
+
             data['variables'] = {
                                  'sheet_ids' : sheet_ids ,
                                  'start_date' : start_date,
-                                 'end_date'   : end_date
+                                 'end_date'   : end_date,
+                                 'emp_group_by' : case.emp_group_by or '',
+                                 'emp_sort_by' : case.emp_sort or '',
+                                 'groupby_label' : map_label,
+                                 # for Late In Early Out Report
+                                 'tsheet_ids' : str(sheet_ids)[1:-1],
+                                 
                                  }
             
             data['ids'] = context.get('active_ids',[])
@@ -153,7 +243,7 @@ class pr_report_wiz(osv.osv_memory):
         return {
         'type': 'ir.actions.report.xml',
         'report_name': report_name,
-        'name' : name,
+        'name' : report_name,
         'datas': data,
             }
         
