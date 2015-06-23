@@ -201,7 +201,7 @@ class pr_report_wiz(osv.osv_memory):
             
             sheet_ids= []
                     
-            
+            map_label = ''
             if  case.emp_group_by:
                 select = select + ",c.id as class_id , c.name as class_name"
                 join = join + """ left outer join hr_"""+case.emp_group_by.replace('_id','')+" c on c.id = h."+case.emp_group_by
@@ -209,6 +209,7 @@ class pr_report_wiz(osv.osv_memory):
                 
                 label = str(case.emp_group_by.replace('_id',''))
                 map_ids =  mapping_obj.search(cr, uid, [('name','=',label)])
+                
                 if map_ids:
                     map = mapping_obj.browse(cr, uid, map_ids)
                     map_label = map.label
@@ -232,7 +233,7 @@ class pr_report_wiz(osv.osv_memory):
                                  'end_date'   : end_date,
                                  'emp_group_by' : case.emp_group_by or '',
                                  'emp_sort_by' : case.emp_sort or '',
-                                 'groupby_label' : map_label,
+                                 'groupby_label' : map_label or '',
                                  # for Late In Early Out Report
                                  'tsheet_ids' : str(sheet_ids)[1:-1],
                                  

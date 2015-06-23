@@ -500,6 +500,10 @@ class hr_punch(osv.osv):
                 
                 }
     
+    _defaults = {
+                 'type' : 'punch'
+                 }
+    
     def onchange_date(self, cr, uid, ids, punch_date, period_start_dt, period_end_dt, context=None):
         res = {}
         warning = ''
