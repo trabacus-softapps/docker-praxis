@@ -32,12 +32,14 @@ import re
 from datetime import datetime
 from dateutil import parser
 import pytz
+from pytz import timezone
 from dateutil.relativedelta import relativedelta
 import calendar
 from dateutil import rrule
 from xlsxwriter.workbook import Workbook
 import time
 import os
+
 
 _logger = logging.getLogger(__name__)
 
@@ -481,6 +483,8 @@ class hr_punch(osv.osv):
                 'act_end_time'    : fields.datetime('Actual End Time'),
                 'units'        : fields.float('Units'),
                 'notes'        : fields.text('Notes'),
+                'login_time'    : fields.char('Start Time'),
+                'logout_time'    : fields.char('End Time'), 
                 'paid_hrs'     : fields.float('Paid Units'),
                 'paycode_id'       : fields.many2one('hr.pay.codes','Pay Code'),
                 'class_id1'        : fields.many2one('hr.class1','Class1'),
@@ -504,9 +508,130 @@ class hr_punch(osv.osv):
                  'type' : 'punch'
                  }
     
+    
+
+    def print_formatted(self, dt):
+        DATE_FORMAT = '%Y-%m-%d %H:%M:%S %Z%z'
+        formatted_date = dt.strftime(DATE_FORMAT)
+        print "%s :: %s" % (dt.tzinfo, formatted_date)
+        
+    def check_local_time(self, cr, uid, ids, time, punch_date, context=None):
+        res = {}
+        warning = {}
+        
+        if time:
+            time = time[0:5] + ':00 ' + time[6:]
+            if int(time[0:2]) > 12 or int(time[3:5]) > 59:
+                warning = {
+                              'title'   : _('Warning!'),
+                              'message' : _('Please enter valid time')
+                          }
+                if context.get('login'):
+                    res.update({'login_time':''})
+                else:
+                    res.update({'logout_time':''})
+                
+                return {'value' : res, 'warning': warning}
+            
+        if time and punch_date:
+            start_time = punch_date +' '+time
+            
+            date = datetime.strptime(start_time, '%Y-%m-%d %I:%M:%S %p')
+            users_timezone = timezone("Asia/Kolkata")
+            
+            date = users_timezone.localize(date)
+            date = date.astimezone(users_timezone)
+            self.print_formatted(date)
+            
+            utc_timezone = timezone('UTC')
+            date = date.astimezone(utc_timezone)
+            self.print_formatted(date)
+            
+            if context.get('login'):
+                res.update({'start_time': date})
+            
+            else:
+                res.update({'end_time': date})
+        
+        return {'value' : res, 'warning': warning}
+     
+     
+
+    
+    def onchange_login_time(self, cr, uid, ids, chk_which, login_time, logout_time, punch_date, context=None):
+        result= {
+                 'value' :{},
+                 'warning' : {}
+                 }
+        warning = {}
+        context = dict(context or {})
+        
+        if chk_which in ('p_date', 'login') and login_time:
+            context.update({'login':1})
+            res = self.check_local_time(cr, uid, ids, login_time, punch_date, context)
+            result['value'].update(res['value'])
+            result['warning'].update(res['warning'])
+        
+        if not login_time:
+            result['value'].update({'start_time':False})
+        
+        if not logout_time:
+            result['value'].update({'end_time':False})
+            
+        
+        if chk_which in ('p_date', 'log_out') and logout_time:
+            context.update({'login':0})
+            res = self.check_local_time(cr, uid, ids, logout_time, punch_date, context)
+            result['value'].update(res['value'])
+            result['warning'].update(res['warning'])
+        print "result...", result
+        return result
+#         zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+#         local_tz = pytz.timezone(zone)
+#         
+#         if login_time:
+#             login_time = login_time[0:5] + ':00 ' + login_time[6:]
+#             if int(login_time[0:2]) > 12 or int(login_time[3:5]) > 59:
+#                 warning = {
+#                               'title'   : _('Warning!'),
+#                               'message' : _('Please enter valid time')
+#                           }
+#                 res.update({'login_time':''})
+#             
+#         if login_time and punch_date:
+#             print "login time", login_time
+#             start_time = punch_date +' '+login_time
+#             
+#             date = datetime.strptime(start_time, '%Y-%m-%d %I:%M:%S %p')
+#             users_timezone = timezone("Asia/Kolkata")
+#             
+#             date = users_timezone.localize(date)
+#             date = date.astimezone(users_timezone)
+#             self.print_formatted(date)
+#             
+#             utc_timezone = timezone('UTC')
+#             date = date.astimezone(utc_timezone)
+#             self.print_formatted(date)
+#             res.update({'start_time': date })
+#             
+#             
+# #             start_date = start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
+# #             utc_timezone = timezone('UTC')
+# #             date = start_date.astimezone(utc_timezone)
+# #             
+# #             res.update({'start_time': date })
+# #             
+# #             print "start dtae", start_time, start_date
+#             
+#             
+#         return {'value' : res, 'warning':warning}
+    
+    
     def onchange_date(self, cr, uid, ids, punch_date, period_start_dt, period_end_dt, context=None):
         res = {}
         warning = ''
+        
+        
         if not period_start_dt and not period_end_date:
             raise osv.except_osv(_('Warning!'), _('Please enter the period start and end dates'))
         
@@ -623,12 +748,12 @@ class hr_punch(osv.osv):
                     if case.start_time:
                         old_start_date = datetime.strptime(case.start_time, '%Y-%m-%d %H:%M:%S')
                         old_start_date = old_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
-                        old_start_date = old_start_date.strftime('%Y-%m-%d %I:%M %p')
+                        old_start_date = old_start_date.strftime('%I:%M %p')
                     
                     if vals.get('start_time'):
                         new_start_date = datetime.strptime(vals.get('start_time'), '%Y-%m-%d %H:%M:%S')
                         new_start_date = new_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
-                        new_start_date = new_start_date.strftime('%Y-%m-%d %I:%M %p')
+                        new_start_date = new_start_date.strftime('%I:%M %p')
                     
                     if old_start_date != new_start_date :
                             
@@ -648,12 +773,12 @@ class hr_punch(osv.osv):
                     if case.end_time:
                         old_end_date = datetime.strptime(case.end_time, '%Y-%m-%d %H:%M:%S')
                         old_end_date = old_end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
-                        old_end_date = old_end_date.strftime('%Y-%m-%d %I:%M %p')
+                        old_end_date = old_end_date.strftime('%I:%M %p')
                     
                     if vals.get('end_time'):
                         new_end_date = datetime.strptime(vals.get('end_time'), '%Y-%m-%d %H:%M:%S')
                         new_end_date = new_end_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
-                        new_end_date = new_end_date.strftime('%Y-%m-%d %I:%M %p')
+                        new_end_date = new_end_date.strftime('%I:%M %p')
                     
                    
                     if old_end_date != new_end_date :
@@ -921,6 +1046,19 @@ class hr_emp_timesheet(osv.osv):
         
         return True
     
+    def localise_time(self, cr, uid, ids, date ,context=None):
+        """ Method to convert UTC to Asia/Kolkata Time zone"""
+        users_timezone = timezone("Asia/Kolkata")
+        utc_timezone = timezone('UTC')
+        
+        date = utc_timezone.localize(date)
+        date = date.astimezone(utc_timezone)
+        
+        
+        date = date.astimezone(users_timezone)
+        return date
+    
+    
     def calculate_timesheet(self, cr, uid, ids, context=None):
         
         """ 
@@ -931,6 +1069,8 @@ class hr_emp_timesheet(osv.osv):
         "Minutes" :((diff.seconds) / 60.0) 
         "hours + minutes" : ((diff.seconds) / 60.0) / 60.0  
         """
+        
+            
         data = []
         sum_obj = self.pool.get('timesheet.summary')
         zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
@@ -971,11 +1111,13 @@ class hr_emp_timesheet(osv.osv):
                         
                         elif p.start_time and not p.end_time:
                             end_time = datetime.strptime(p.start_time, '%Y-%m-%d %H:%M:%S') + relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'end_time':end_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_end_time':end_time.strftime('%Y-%m-%d %H:%M:%S')})
+                            locale_date = self.localise_time(cr, uid, ids, end_time ,context=context)
+                            punch_obj.write(cr, uid, [p.id], {'logout_time': locale_date.strftime('%I:%M %p'),'end_time':end_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_end_time':end_time.strftime('%Y-%m-%d %H:%M:%S')})
                         
                         elif p.end_time and not p.start_time:
                             start_time = datetime.strptime(p.end_time, '%Y-%m-%d %H:%M:%S') - relativedelta(hours = case.employee_id.time_rule_id.work_hours)
-                            punch_obj.write(cr, uid, [p.id], {'start_time':start_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_start_time': start_time.strftime('%Y-%m-%d %H:%M:%S')})
+                            locale_date = self.localise_time(cr, uid, ids, start_time ,context=context)
+                            punch_obj.write(cr, uid, [p.id], {'login_time':locale_date.strftime('%I:%M %p'),'start_time':start_time.strftime('%Y-%m-%d %H:%M:%S'), 'act_start_time': start_time.strftime('%Y-%m-%d %H:%M:%S')})
                             
                             
                     # to  get the time rounding
@@ -1091,22 +1233,23 @@ class hr_emp_timesheet(osv.osv):
                     
                     
             for l in lines:
-                sum_lines = {
-                             'daily_date' : case.period_end_dt,
-                             'paycode_id' : l[0],
-                             'units'      : tot_units[l],#l[1][10] * len( lines[l] ),
-                             'class_id1' :  l[1][0], 
-                             'class_id2' :  l[1][1], 
-                             'class_id3' :  l[1][2], 
-                             'class_id4' :  l[1][3], 
-                             'class_id5' :  l[1][4], 
-                             'class_id6' :  l[1][5], 
-                             'class_id7' :  l[1][6], 
-                             'class_id8' :  l[1][7], 
-                             'class_id9' :  l[1][8], 
-                             'class_id10':  l[1][9], 
-                             }
-                data.append((0,0, sum_lines))
+                if tot_units[l] > 0 :
+                    sum_lines = {
+                                 'daily_date' : case.period_end_dt,
+                                 'paycode_id' : l[0],
+                                 'units'      : tot_units[l],#l[1][10] * len( lines[l] ),
+                                 'class_id1' :  l[1][0], 
+                                 'class_id2' :  l[1][1], 
+                                 'class_id3' :  l[1][2], 
+                                 'class_id4' :  l[1][3], 
+                                 'class_id5' :  l[1][4], 
+                                 'class_id6' :  l[1][5], 
+                                 'class_id7' :  l[1][6], 
+                                 'class_id8' :  l[1][7], 
+                                 'class_id9' :  l[1][8], 
+                                 'class_id10':  l[1][9], 
+                                 }
+                    data.append((0,0, sum_lines))
             # deleting the existing line and creating newline
             summary_ids = sum_obj.search(cr, uid, [('timesheet_id','=', case.id)])
             sum_obj.unlink(cr, uid, summary_ids, context=None) 

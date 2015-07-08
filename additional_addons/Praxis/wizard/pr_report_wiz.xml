@@ -56,17 +56,14 @@
                         
                     </sheet>
                     <footer>
-                        <div>
-                            Report
-                        </div>
-                        <group class="oe_left oe_form" col="3"> 
-                            <field name="report_id" nolabel = "1" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
+                      
+                        <group class="oe_left oe_form" col="4" colspan="2"> 
+                            <field name="report_id" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
+                            <button name="print_report" string="View Report" type="object" class="oe_highlight"/>
                         </group>
                         
-                        <button name="print_report" string="View Report" type="object" class="oe_highlight"/>
-                        or
-                        <button string="Cancel" class="oe_link" special="cancel"/>
-                    </footer>
+                        
+                        </footer>
                 </form>
             </field>
         </record>
@@ -76,7 +73,8 @@
             <field name="name">Reports</field>
             <field name="res_model">pr.report.wiz</field>
             <field name="view_type">form</field>
-            <field name="target">new</field>
+            <field name="view_mode">form</field>
+            <field name="target">current</field>
         </record>
         
         <record id="action_pr_report_wiz_view1" model="ir.actions.act_window.view">

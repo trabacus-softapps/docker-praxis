@@ -44,6 +44,16 @@ class pr_report_wiz(osv.osv_memory):
             result.append((m.name[:-1] + '_id'+ m.name[-1:], m.label))
         return result
     
+    def _get_default_class(self, cr, uid, fields, context=None):
+        result = {}
+        mapping_obj = self.pool.get('hr.class.mapping')
+        map_ids = mapping_obj.search(cr, uid, [])
+        if map_ids :
+            for m in mapping_obj.browse(cr, uid,map_ids[0]):
+                return (m.name[:-1] + '_id'+ m.name[-1:])
+        return result
+        
+    
     _columns = {
                 'class_id1'        : fields.many2one('hr.class1','Class1'),
                 'class_id2'        : fields.many2one('hr.class2','Class2'),
@@ -68,11 +78,13 @@ class pr_report_wiz(osv.osv_memory):
                 'end_date'         : fields.date('To'),
                 'report_id'        : fields.many2one('ir.actions.report.xml','Report'),
                 'emp_sort'         : fields.selection([('emp_no','Employee Number'),('emp_name','Employee Name')],'Sort By'),
-                'emp_group_by'            : fields.selection(_class_id_get, 'Group By'),
+                'emp_group_by'     : fields.selection(_class_id_get, 'Group By'),
                 }
     _defaults = {
                  'pay_period' : 'current',
                  'active'  : True,
+                 'emp_sort' : 'emp_name',
+                 'emp_group_by' : _get_default_class,
                  }
     
     
