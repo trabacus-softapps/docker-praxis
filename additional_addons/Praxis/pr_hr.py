@@ -1025,7 +1025,8 @@ class hr_emp_timesheet(osv.osv):
                         start_time = self.gettime(cr, uid, punch_id.start_time, round_id.type1, 
                                                   round_id.hours1, context=context)
                         if start_time:
-                            vals.update({'start_time' : start_time})
+                            locale_date = self.localise_time(cr, uid, ids, datetime.strptime(start_time, '%Y-%m-%d %H:%M:%S') ,context=context)
+                            vals.update({'login_time': locale_date.strftime('%I:%M %p'),'start_time' : start_time})
                             # to change the original clock time
                             if uid !=1 :
                                 vals.update({'act_start_time' : start_time})
@@ -1037,7 +1038,8 @@ class hr_emp_timesheet(osv.osv):
                         end_time = self.gettime(cr, uid, punch_id.end_time, round_id.type2, 
                                                   round_id.hours2, context=context)
                         if end_time:
-                            vals.update({'end_time' : end_time})
+                            locale_date = self.localise_time(cr, uid, ids, datetime.strptime(end_time, '%Y-%m-%d %H:%M:%S') ,context=context)
+                            vals.update({'logout_time': locale_date.strftime('%I:%M %p'),'end_time' : end_time})
                             if uid != 1 :
                                 vals.update({'act_end_time' : end_time})
                 

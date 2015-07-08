@@ -285,14 +285,14 @@ openerp.web.form.widgets.add('custom_time', 'openerp.Praxis.custom_time');
        change_time: function(e) {
        	var self = this;
        	console.log('inside change datetimr', e.which);
-       	//this.set_value_from_ui_time();
-       	//this.trigger("datetime_changed");
-        if((e.type !== "keypress" || e.which === 13) && this.is_syntax_valid()) {
-            this.set_value_from_ui_time();
-            this.trigger("datetime_changed");
+       	this.set_value_from_ui_time();
+       	this.trigger("datetime_changed");
+        //if((e.type !== "keypress" || e.which === 13) && this.is_syntax_valid()) {
+         //   this.set_value_from_ui_time();
+         //   this.trigger("datetime_changed");
             
             
-        }
+        //}
     },
     
     
