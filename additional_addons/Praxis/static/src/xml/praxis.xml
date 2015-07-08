@@ -81,6 +81,8 @@
     </tfoot>
 </table>
     
+     
+    
      <t t-name="custom_time">
        <span class="oe_form_field oe_datepicker_root oe_form_field_datetime" t-att-style="widget.node.attrs.style">
             <a t-if="widget.get('effective_readonly')" href="#" class="oe_form_uri" target="_blank"/>
@@ -94,6 +96,7 @@
             </t>
            
         </span>
+     </t>
          
   <!--        <span>
                 <t t-set="placeholder" t-value="widget.getParent().node and widget.getParent().node.attrs.placeholder"/>
@@ -109,7 +112,7 @@
         
 
         
-    </t>
+   
     
     
 </templates>
