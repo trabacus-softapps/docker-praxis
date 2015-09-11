@@ -93,19 +93,20 @@ class Reports(openerp.addons.web.controllers.main.Reports):
                 file_name = action['report_name']
         file_name = '%s.%s' % (file_name, report_struct['format'])
         
+        ts_obj = request.session.model('hr.emp.timesheet')
+        emp_obj = request.session.model('hr.employee')
         # Customized to execute an excel report instead of dummy penthao report(sale sumary)
         if action['report_name'] == 'Daily Attendance Register':
-            ts_obj = request.session.model('hr.emp.timesheet')
+            
             file_name = 'Daily Attendance Register.xlsx'
             #report = ss_obj.generate_xls(cr, uid, action['datas'])
-            report = ts_obj.get_file(report_data)
+            report = emp_obj.get_file(report_data)
             report_mimetype = 'application/vnd.ms-excel'
             
         if action['report_name'] == 'Monthly Status Report':
-            ts_obj = request.session.model('hr.emp.timesheet')
             file_name = 'monthly_status_report.xlsx'
             #report = ss_obj.generate_xls(cr, uid, action['datas'])
-            report = ts_obj.generate_montly_status_xls(report_data)
+            report = emp_obj.generate_montly_status_xls(report_data)
             report_mimetype = 'application/vnd.ms-excel'
             
             #

@@ -77,13 +77,13 @@ class pr_report_wiz(osv.osv_memory):
                 'start_date'       : fields.date('From'),
                 'end_date'         : fields.date('To'),
                 'report_id'        : fields.many2one('ir.actions.report.xml','Report'),
-                'emp_sort'         : fields.selection([('emp_no','Employee Number'),('emp_name','Employee Name')],'Sort By'),
+                'emp_sort'         : fields.selection([('identification_id','Employee Number'),('name_related','Employee Name')],'Sort By'),
                 'emp_group_by'     : fields.selection(_class_id_get, 'Group By'),
                 }
     _defaults = {
                  'pay_period' : 'current',
                  'active'  : True,
-                 'emp_sort' : 'emp_name',
+                 'emp_sort' : 'name_related',
                  'emp_group_by' : _get_default_class,
                  }
     
@@ -107,7 +107,133 @@ class pr_report_wiz(osv.osv_memory):
             res['arch'] = etree.tostring(doc)
         return res
     
+    
     def print_report(self, cr, uid, ids, context=None):
+        today = datetime.now()
+        punch_date = today.strftime('%Y-%m-%d')
+        ts_obj = self.pool.get('hr.emp.timesheet')
+        emp_obj = self.pool.get('hr.employee')
+        mapping_obj = self.pool.get("hr.class.mapping")
+        
+        group_by = '' 
+        sort_by = ''
+        order = ''
+        cond = ''
+        period = ''
+        
+        for case in self.browse(cr, uid, ids):
+            report_name = ''
+            name = ''
+            data = {}
+            sale_obj = self.pool.get("sale.order")
+            
+           
+            
+            report_name = case.report_id.name
+            data['model'] = context.get('hr.employee', 'ir.ui.menu')
+            condition = []
+            
+            for r in range(1, 11):
+                if case['class_id'+str(r)]:
+                    condition.append(('class_id'+str(r),'=',case['class_id'+str(r)].id))
+            
+            if case.paygroup_id :
+                condition.append(('pay_group_id','=',case.paygroup_id.id))
+            
+            if case.timegroup_id :
+                condition.append(('time_rule_id','=',case.timegroup_id.id))
+                
+            if case.supervisor_id :
+                condition.append(('parent_id','=',case.supervisor_id.id))
+                
+            if case.employee_ids:
+                condition.append(('id','in',[x.id for x in case.employee_ids]))
+            
+         
+            
+            if case.emp_group_by:
+                order = case.emp_group_by + ' asc '
+                
+            
+            if case.emp_sort :
+                sort_by = case.emp_sort + ' asc'
+                if order :
+                    order = order + sort_by
+                else:
+                    order = sort_by
+            
+            emp_ids = emp_obj.search(cr , uid, condition)
+                    
+            
+            select = """
+            select 
+                  h.id 
+                , h.name_related as emp_name
+                , h.identification_id as emp_no
+            """
+            
+            join = """
+                    from hr_employee h 
+                    inner join resource_resource r on r.id = h.resource_id
+                    """
+            
+            if emp_ids:
+                if len(emp_ids) > 1:
+                    cond = """ where h.id in """+ str(tuple(emp_ids))
+                else:
+                    cond = """ where h.id in ("""+ str(emp_ids[0]) + """)"""
+            
+            emp_ids = []
+                    
+            map_label = ''
+            if  case.emp_group_by:
+                select = select + ",c.id as class_id , c.name as class_name"
+                join = join + """ left outer join hr_"""+case.emp_group_by.replace('_id','')+" c on c.id = h."+case.emp_group_by
+                cond = cond + " order by class_id"
+                
+                label = str(case.emp_group_by.replace('_id',''))
+                map_ids =  mapping_obj.search(cr, uid, [('name','=',label)])
+                
+                if map_ids:
+                    map = mapping_obj.browse(cr, uid, map_ids)
+                    map_label = map.label
+            
+            if case.emp_sort:
+                cond = cond + ","+ case.emp_sort if 'order' in cond else  cond+ " order by "+ case.emp_sort
+                
+            
+            sqlstr = select + str(join) + str(cond)
+            print "sqlstr", sqlstr
+            
+            cr.execute(sqlstr)
+            for c in cr.fetchall():
+                emp_ids.append(c[0])
+                
+
+
+            data['variables'] = {
+                                 'emp_ids' : emp_ids ,
+                                 'start_date' : case.start_date or '2020-01-01',
+                                 'end_date'   : case.end_date or '2020-01-31',
+                                 'emp_group_by' : case.emp_group_by or '',
+                                 'emp_sort_by' : case.emp_sort or '',
+                                 'groupby_label' : map_label or '',
+                                 'pay_period'  : case.pay_period or '', 
+                                 # for Late In Early Out Report
+                                 'temp_ids' : str(emp_ids)[1:-1],
+                                 
+                                 }
+            
+            data['ids'] = context.get('active_ids',[])
+        
+        return {
+        'type': 'ir.actions.report.xml',
+        'report_name': report_name,
+        'name' : report_name,
+        'datas': data,
+            }
+    
+    def print_report1(self, cr, uid, ids, context=None):
         today =datetime.now()
         punch_date = today.strftime('%Y-%m-%d')
         ts_obj = self.pool.get('hr.emp.timesheet')

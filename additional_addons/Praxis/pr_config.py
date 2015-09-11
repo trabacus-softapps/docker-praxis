@@ -504,3 +504,5 @@ class hr_class_mapping(osv.osv):
 hr_class_mapping()
 
 
+
+

@@ -1,0 +1,17 @@
+.custom_bold {
+    color: #7c7bad !important;
+    font-size: 20px !important;
+    font-weight: bold !important;
+    margin: 15px 0 10px !important;
+}
+
+.my_class {width: 300px; color: #7c7bad !important; }
+
+
+.openerp .oe_color  {
+  color: red !important;
+}
+
+.openerp .oe_color input {
+  color: red !important;
+}

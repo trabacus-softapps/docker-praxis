@@ -330,4 +330,7 @@ openerp.web.form.widgets.add('custom_time', 'openerp.Praxis.custom_time');
 
 
 
+
+
+
 };
