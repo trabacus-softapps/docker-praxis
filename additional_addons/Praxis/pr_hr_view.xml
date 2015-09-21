@@ -273,6 +273,7 @@
                     <sheet>
                         <div class="oe_right">
                             <button name="get_timesheet" icon="gtk-go-back" context="{'prev':1, 'next':0,'start_date':period_start_dt,'end_date':period_end_dt}" type="object" help="Get Previous Timesheet"/>
+                            <button name="get_timesheet" icon="gtk-go-down" context="{'start_date':period_start_dt,'end_date':period_end_dt}" type="object" help="Get Current Timesheet"/>
                             <button name="get_timesheet" icon ="gtk-go-forward" type="object" context="{'next':1, 'prev' :0,'start_date':period_start_dt,'end_date':period_end_dt}"  help="Get Next Timesheet"/>
                         </div>
                         <group col="4" colspan="2">
@@ -371,7 +372,7 @@
         
         
         <record id="pr_open_view_employee_action" model="ir.actions.act_window">
-            <field name="name">Timesheet1</field>
+            <field name="name">Timesheet</field>
             <field name="res_model">hr.employee</field>
             <field name="view_type">form</field>
             <field name="view_mode">kanban,tree,form</field>
@@ -580,8 +581,8 @@
         </record>
         
        
-        <menuitem action="view_emp_timesheet_action" id="menu_emp_timesheet_id" sequence="11" parent="praxis_timesheet_submenu"/>
-                
+<!--        <menuitem action="view_emp_timesheet_action" id="menu_emp_timesheet_id" sequence="11" parent="praxis_timesheet_submenu"/>
+-->                
        
         <!--****************************************************************************************************
                             HR Holiday Details
