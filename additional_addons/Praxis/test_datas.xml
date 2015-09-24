@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+
+<!--****************************************************************************************************
+                            HR Time Sheet Details
+        *****************************************************************************************************  -->
+
+<!--Timesheet form view -->
+<record id="view_emp_timesheet_form" model="ir.ui.view">
+    <field name="name">pr.hr.emp.timesheet.form</field>
+    <field name="model">hr.emp.timesheet</field>
+    <field name="arch" type="xml">
+        <form string="Employee Timesheet">
+            <header>
+                <button name="calculate_timesheet" string="Calculate" type="object" class="oe_highlight"/>
+            </header>
+            <sheet>
+                <div class="oe_right">
+                    <button name="get_timesheet" icon="gtk-go-back" context="{'prev':1, 'next':0}" type="object" help="Get Previous Timesheet"/>
+                    <button name="get_timesheet" icon ="gtk-go-forward" type="object" context="{'next':1, 'prev' :0}"  help="Get Next Timesheet"/>
+                </div>
+                
+                <group col="4" colspan="2">
+                    <field name="employee_id" required = "1" on_change="onchange_employee_id(employee_id, context)"/>
+                    <field name="emp_no" readonly="1"/>
+                    <field name="period_start_dt" readonly="1"/>
+                    <field name="period_end_dt" readonly="1"/>
+                </group>
+                <notebook>
+                    <page string = "Punch">
+                        <field name="punch_ids" context="{'default_type':'punch'}">
+                            <tree string="Punch Lines" editable="top">
+                                <field name="punch_date" required="1" attrs="{'readonly':[('type','=','daily')]}" on_change="onchange_login_time('p_date', login_time, logout_time, punch_date, context)"/>
+                                <!--                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
+-->
+                                <field name="login_time" widget="custom_time" 
+                                    on_change="onchange_login_time('login',login_time, logout_time, punch_date, context)"
+                                    attrs="{'required':[('type','=','punch'),('logout_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+                                
+                                <field name="logout_time" widget="custom_time" 
+                                    on_change="onchange_login_time('log_out', login_time, logout_time, punch_date, context)"
+                                    attrs="{'required':[('type','=','punch'),('login_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+                                
+                                <!--                                        <field name="act_start_time" attrs="{'required':[('type','=','punch'),('end_time','=',False)], 'readonly':[('type','=','daily')]}" class="oe_highlight"/>
+-->                                        <field name="start_time" class="oe_highlight" invisible="1"/>
+                                <!--on_change="onchange_time(punch_date, start_time, end_time, context)"-->
+                                <field name="end_time" invisible="1"/>
+                                <!--                                               on_change="onchange_time(punch_date, start_time, end_time, context)"-->
+                                <!--                                        <field name="act_end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+-->                                        <field name="units" attrs="{'readonly':[('type','=','daily')]}" sum="total"/>
+                                <field name="notes" attrs="{'readonly':[('type','=','daily')]}"/>
+                                <!--                                        <field name="check" widget="toggle_button"/>-->
+                                <field name="type" invisible="1"/>
+                            </tree>
+                            <form>
+                                <group>
+                                    <field name="punch_date"/>
+                                    <field name="start_time"/>
+                                    <field name="end_time"/>
+                                    <field name="units"/>
+                                    <field name="notes"/>
+                                </group>
+                                
+                                <group>
+                                    <field name="multi_punch_lines">
+                                        <tree editable="bottom">
+                                            <field name="multi_punch_time"/>
+                                        </tree>
+                                    </field>
+                                    
+                                </group>
+                            </form>
+                        </field>
+                        
+                        <field name="view_line_ids">
+                            <tree string="Punch Lines" editable="top">
+                                <field name="punch_date" required="1" attrs="{'readonly':[('type','=','daily')]}" on_change="onchange_login_time('p_date', login_time, logout_time, punch_date, context)"/>
+                                <!--                                               on_change="onchange_date(punch_date, parent.period_start_dt, parent.period_end_dt, context)"
+-->
+                                <field name="login_time" widget="custom_time" 
+                                    on_change="onchange_login_time('login',login_time, logout_time, punch_date, context)"
+                                    attrs="{'required':[('type','=','punch'),('logout_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+                                
+                                <field name="logout_time" widget="custom_time" 
+                                    on_change="onchange_login_time('log_out', login_time, logout_time, punch_date, context)"
+                                    attrs="{'required':[('type','=','punch'),('login_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+                                
+                                <!--                                        <field name="act_start_time" attrs="{'required':[('type','=','punch'),('end_time','=',False)], 'readonly':[('type','=','daily')]}" class="oe_highlight"/>
+-->                                        <field name="start_time" class="oe_highlight" invisible="1"/>
+                                <!--on_change="onchange_time(punch_date, start_time, end_time, context)"-->
+                                <field name="end_time" invisible="1"/>
+                                <!--                                               on_change="onchange_time(punch_date, start_time, end_time, context)"-->
+                                <!--                                        <field name="act_end_time" attrs="{'required':[('type','=','punch'),('start_time','=',False)], 'readonly':[('type','=','daily')]}"/>
+-->                                        <field name="units" attrs="{'readonly':[('type','=','daily')]}" sum="total"/>
+                                <field name="notes" attrs="{'readonly':[('type','=','daily')]}"/>
+                                <!--                                        <field name="check" widget="toggle_button"/>-->
+                                <field name="type" invisible="1"/>
+                            </tree>
+                        </field>
+                    </page>
+                    
+                    <page string = "Daily">
+                        <field name="daily_ids"  nolabel="1" domain="[('type','=','daily')]" context="{'default_type':'daily', 'employee_id':employee_id}"/>
+                    </page>
+                    
+                </notebook>
+                <newline/>
+                <notebook>
+                    <page string="Timesheet Summary">
+                        <field name="summary_ids" readonly="1" context="{'employee_id': employee_id, 'tree_view_ref': 'view_summary_class_tree'}" nolabel="1"/>
+                    </page>
+                    
+                    <page string = "Audit">
+                        <field name="audit_ids" nolabel="1" editable="top" readonly="1">
+                            <tree>
+                                <field name="punch_date"/>
+                                <field name="change_time"/>
+                                <field name="user_id"/>
+                                <field name="event_type"/>
+                                <field name="column_name"/>
+                                <field name="original_value"/>
+                                <field name="new_value"/>
+                            </tree>
+                        </field>
+                    </page>
+                </notebook>
+            </sheet>
+            <!--      <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>-->
+        </form>
+    </field>
+</record>
+
+<!--Shift Tree view -->
+<record id="view_emp_timesheet_tree" model="ir.ui.view">
+    <field name="name">pr.hr.emp.timesheet.tree</field>
+    <field name="model">hr.emp.timesheet</field>
+    <field name="arch" type="xml">
+        <tree string="Employee Timesheet">
+            <field name="employee_id" />
+            <field name="emp_no"/>
+            <field name="period_start_dt"/>
+            <field name="period_end_dt"/>
+        </tree>
+    </field>
+</record>
+
+<!--Shift Search view -->
+<record id="view_emp_timesheet_search" model="ir.ui.view">
+    <field name="name">pr.hr.emp.timesheet.search</field>
+    <field name="model">hr.emp.timesheet</field>
+    <field name="arch" type="xml">
+        <search string="Employee Timesheet">
+            <field name="employee_id"/>
+            <field name="emp_no"/>
+            <field name="period_start_dt"/>
+            <field name="period_end_dt"/>
+        </search>
+    </field>
+</record>
+
+<record id="view_emp_timesheet_action" model="ir.actions.act_window">
+    <field name="name">Timesheet</field>
+    <field name="res_model">hr.emp.timesheet</field>
+    <field name="view_type">form</field>
+    <field name="view_mode">tree,form</field>
+    <field name="domain">[]</field>
+    <field name="context">{}</field>
+    <field name="view_id" eval="False"/>
+    <field name="help" type="html">
+        <p class="oe_view_nocontent_create">
+            Click to add a new Time Sheet.
+        </p>
+    </field>
+</record>
+
+
+<!--        <menuitem action="view_emp_timesheet_action" id="menu_emp_timesheet_id" sequence="11" parent="praxis_timesheet_submenu"/>
+-->                

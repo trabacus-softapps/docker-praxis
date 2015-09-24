@@ -217,6 +217,7 @@ class hr_employee(osv.osv):
         return True
     
     def _get_testdates(self, cr, uid, ids, field_names, args, context=None):
+        print "Inside _get_testdates" ,context
         res = {}
         for case in self.browse(cr, uid, ids):
             res[case.id] = {}.fromkeys(field_names,False)
@@ -230,47 +231,49 @@ class hr_employee(osv.osv):
     
     def onchange_dates(self, cr, uid, ids, test_start_dt, test_end_dt, context=None):
         res = {}
+        print "inside the on_change"
         res.update({'period_start_dt':test_start_dt, 'period_end_dt':test_end_dt})
         return {'value':res}
     
-    def _get_current_period(self, cr, uid, ids, field_names, args, context=None):
-        context = dict(context or {})
-        res = {}
-         
-        start_dt = False
-        end_dt = False
-         
-        for case in self.browse(cr, uid, ids):
-            
-            
-            res[case.id] = { 'period_start_dt'  : False,
-                                     'period_end_dt'    : False}
-             
-            if context.get('next'):
-                period_date = datetime.strptime(context.get('end_date'), '%Y-%m-%d')
-                start_dt = period_date + relativedelta(days = 1)
-                end_dt = start_dt.replace(day = calendar.monthrange(start_dt.year, start_dt.month)[1])
-                 
-             
-            # to get the previous month start date and end date
-            if context.get('prev'):
-                period_date = datetime.strptime(context.get('start_date'), '%Y-%m-%d')
-                end_dt = period_date - relativedelta(days = 1)
-                start_dt = end_dt.replace(day = 1)
-            res[case.id]={
-                                 'period_start_dt'  : start_dt,
-                                 'period_end_dt'    : end_dt
-                                 }
-             
-            if not context.get('prev') and not context.get('next'):
-                if case.pay_group_id:
-                    #res[case.id] = case.pay_group_id.period_start_dt
-                    #cr.execute("update hr_employee set period_start_dt = '"+case.pay_group_id.period_start_dt+"',period_end_dt = '"+case.pay_group_id.period_end_dt+"' where id = "+str(case.id))
-                    res[case.id].update({
-                                     'period_start_dt'  : case.pay_group_id.period_start_dt,
-                                     'period_end_dt'    : case.pay_group_id.period_end_dt
-                                     })
-        return res
+#     def _get_current_period(self, cr, uid, ids, field_names, args, context=None):
+#         context = dict(context or {})
+#         res = {}
+#          
+#         start_dt = False
+#         end_dt = False
+#         print "context.........", context
+#          
+#         for case in self.browse(cr, uid, ids):
+#             
+#             
+#             res[case.id] = { 'period_start_dt'  : False,
+#                                      'period_end_dt'    : False}
+#              
+#             if context.get('next'):
+#                 period_date = datetime.strptime(context.get('end_date'), '%Y-%m-%d')
+#                 start_dt = period_date + relativedelta(days = 1)
+#                 end_dt = start_dt.replace(day = calendar.monthrange(start_dt.year, start_dt.month)[1])
+#                  
+#              
+#             # to get the previous month start date and end date
+#             if context.get('prev'):
+#                 period_date = datetime.strptime(context.get('start_date'), '%Y-%m-%d')
+#                 end_dt = period_date - relativedelta(days = 1)
+#                 start_dt = end_dt.replace(day = 1)
+#             res[case.id]={
+#                                  'period_start_dt'  : start_dt,
+#                                  'period_end_dt'    : end_dt
+#                                  }
+#              
+#             if not context.get('prev') and not context.get('next') and not context.get('calculate'):
+#                 if case.pay_group_id:
+#                     #res[case.id] = case.pay_group_id.period_start_dt
+#                     #cr.execute("update hr_employee set period_start_dt = '"+case.pay_group_id.period_start_dt+"',period_end_dt = '"+case.pay_group_id.period_end_dt+"' where id = "+str(case.id))
+#                     res[case.id].update({
+#                                      'period_start_dt'  : case.pay_group_id.period_start_dt,
+#                                      'period_end_dt'    : case.pay_group_id.period_end_dt
+#                                      })
+#         return res
     
     def _write_dates(self, cr, uid, id, name, value, inv_arg, context = None):
         context = dict(context or {})
@@ -354,8 +357,8 @@ class hr_employee(osv.osv):
                 'test_start_dt' : fields.function(_get_testdates, string="Test start Date", multi="test",type="date"),
                 'test_end_dt'   : fields.function(_get_testdates, string="Test End Date",multi="test",type="date"),
                 
-                'period_start_dt' : fields.function(_get_current_period, string='Period Start', type="date", store=True, multi="date"),
-                'period_end_dt' : fields.function(_get_current_period,string='Period End', type="date", store=True, multi="date"),
+                'period_start_dt' : fields.date(string='Period Start'),
+                'period_end_dt' : fields.date(string='Period End'),
                 
                 #'test_date' : fields.function(_get_current_period, fnct_inv=_write_dates, string="Test Date", store=False, type="date"),
                 
@@ -685,6 +688,9 @@ class hr_employee(osv.osv):
         lunch_hrs = 0.0
         tot_units = {}
         
+        context = dict(context or {})
+        context.update({'calculate':1})
+        
         
         for case in self.browse(cr, uid, ids):
             vals = {}
@@ -864,63 +870,38 @@ class hr_employee(osv.osv):
     
     def get_timesheet(self, cr, uid, ids, context=None):
         """ To get the Previous or next month  timesheet of current employee """
+        context = dict(context or {})
+        res = {}
+          
+        start_dt = False
+        end_dt = False
+        print "context.........", context
+          
+        for case in self.browse(cr, uid, ids):
+             
+             
+          
+            
+            # for current record
+            start_dt = case.pay_group_id.period_start_dt,
+            end_dt = case.pay_group_id.period_end_dt
+              
+            if context.get('next'):
+                period_date = datetime.strptime(case.period_end_dt, '%Y-%m-%d')
+                start_dt = period_date + relativedelta(days = 1)
+                end_dt = start_dt.replace(day = calendar.monthrange(start_dt.year, start_dt.month)[1])
+                  
+              
+            # to get the previous month start date and end date
+            if context.get('prev'):
+                period_date = datetime.strptime(case.period_start_dt, '%Y-%m-%d')
+                end_dt = period_date - relativedelta(days = 1)
+                start_dt = end_dt.replace(day = 1)
+
         
-        return self.write(cr, uid, ids, {'test_start_dt': False, 'test_end_dt' : False}, context)
+        return self.write(cr, uid, ids, {'period_start_dt': start_dt, 'period_end_dt' : end_dt}, context)
         
-#         context = dict(context or {})
-#         context.update({'no_update':1})
-#         ir_model_data = self.pool.get('ir.model.data')
-#         condition = []
-#         order = ""
-#         start_dt = end_dt = False
-#         
-#         for case in self.browse(cr, uid, ids):
-#             # to get the next month start date and end date
-#             if context.get('next'):
-#                 period_date = datetime.strptime(case.period_end_dt, '%Y-%m-%d')
-#                 start_dt = period_date + relativedelta(days = 1)
-#                 end_dt = start_dt.replace(day = calendar.monthrange(start_dt.year, start_dt.month)[1])
-#                 
-#             
-#             # to get the previous month start date and end date
-#             else:
-#                 period_date = datetime.strptime(case.period_start_dt, '%Y-%m-%d')
-#                 end_dt = period_date - relativedelta(days = 1)
-#                 start_dt = end_dt.replace(day = 1)
-#                 
-#             
-#             self.write(cr, uid, ids, {'test_date':start_dt, 'period_start_dt':False, 'period_end_dt' : False}, context)
-                
-                
-#                 self.write(cr, uid, [case.id], {'period_end_dt': '2015-06-10'}, context)
-#                 return True
-#                 condition= [('employee_id','=', case.employee_id.id), ('period_start_dt','>',case.period_end_dt)]
-#                 order = "period_start_dt asc"
-#             else:
-#                 condition= [('employee_id','=', case.employee_id.id), ('period_end_dt','<',case.period_start_dt)]
-#                 order = "period_start_dt desc"
-#                 
-#             next_ids = self.search(cr, uid, condition, order=order, limit = 1)
-#             if next_ids:
-#                 try:
-#                     compose_form_id = ir_model_data.get_object_reference(cr, uid, 'Praxis', 'view_emp_timesheet_form')[1]
-#                 except ValueError:
-#                     compose_form_id = False
-#                 
-#                 return {
-#                         'type': 'ir.actions.act_window',
-#                         'view_type': 'form',
-#                         'view_mode': 'form',
-#                         'res_model': 'hr.emp.timesheet',
-#                         'res_id' : next_ids and next_ids[0] or  False,
-#                         'views': [(compose_form_id, 'form')],
-#                         'view_id': compose_form_id,
-#                         'target' : 'current',
-#                         'auto_refresh' : 1,
-#                         'context'  : context,
-#                         
-#                       }
-#             return True
+
 
     def build_header(self, start_date, end_date, workbook, sheet, datetime, row, text_centre, bold_centre, border_style,slno):
         
@@ -1814,8 +1795,7 @@ class hr_punch(osv.osv):
                                'punch_date' : vals.get('punch_date',case.punch_date),
                                'user_id'    : uid,
                                'event_type' : context.get('event_type'),
-                               'timesheet_id' : case.timesheet_id.id,
-                               'employee_id' : case.id,
+                               'employee_id' : case.employee_id.id,
                                'change_time' : today
                                        
                                        })
@@ -1844,9 +1824,9 @@ class hr_punch(osv.osv):
                                            'new_value' : new_start_date,
                                            'column_name' : 'Start Time',
                                            })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
                                                    ,('original_value','=',old_start_date),('new_value','=',new_start_date), ('column_name','=','Start Time')
-                                                   ,('employee_id','=',vals.get('employee_id'))])
+                                                   ,('employee_id','=',case.employee_id.id)])
                         if not audit_ids:
                             audit_obj.create(cr, uid, audit_vals)
                 
@@ -1870,9 +1850,9 @@ class hr_punch(osv.osv):
                                            'column_name' : 'End Time',
                                            
                                            })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
                                                    ,('original_value','=',old_end_date),('new_value','=',new_end_date), ('column_name','=','End Time')
-                                                   ,('employee_id','=',vals.get('employee_id'))])
+                                                   ,('employee_id','=',case.employee_id.id)])
                         if not audit_ids:
                             audit_obj.create(cr, uid, audit_vals)
                     
@@ -1892,9 +1872,9 @@ class hr_punch(osv.osv):
                                        'column_name' : 'Units',
                                        
                                        })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date')), ('timesheet_id','=',vals.get('timesheet_id'))
+                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
                                                    ,('original_value','=',old_units),('new_value','=',new_units), ('column_name','=','Units')
-                                                   ,('employee_id','=',vals.get('employee_id'))])
+                                                   ,('employee_id','=',case.employee_id.id)])
                         if not audit_ids:
                             audit_obj.create(cr, uid, audit_vals)
                    
@@ -1923,6 +1903,7 @@ class hr_punch(osv.osv):
         context = dict(context or {})
         if uid != 1 :
             context.update({'event_type':'delete'})
+            context.update({'active_ids': ids})
             self.create_audit(cr, uid, ids, {}, context=context)
         
         return super(hr_punch, self).unlink(cr, uid, ids, context)
@@ -2033,7 +2014,7 @@ class hr_emp_timesheet(osv.osv):
                'daily_ids' : fields.one2many('hr.punch', 'timesheet_id', 'Punch', domain=[('type','=','daily')], track_visibility="onchange"),
                'summary_ids' : fields.one2many('timesheet.summary','timesheet_id', 'Summary'),
                'emp_no' : fields.related('employee_id','identification_id', type='char', string='Employee Number'),
-               'audit_ids' : fields.one2many('hr.audit','timesheet_id','Audit'),
+               #'audit_ids' : fields.one2many('hr.audit','timesheet_id','Audit'),
                
                'view_line_ids': fields.function(_get_lines, fnct_inv=_set_lines, string='Lines', relation="hr.punch", method=True, type="one2many")
                
@@ -3003,7 +2984,7 @@ class hr_holidays(osv.osv):
                        'class_id8' : case.employee_id.class_id8 and case.employee_id.class_id8.id or False,
                        'class_id9' : case.employee_id.class_id9 and case.employee_id.class_id9.id or False,
                        'class_id10' : case.employee_id.class_id10 and case.employee_id.class_id10.id or False,
-                       'timesheet_id' : sheet_ids and sheet_ids[0] or False,
+                       'employee_id' : case.employee_id.id,
                        'type' : 'daily',
                        'notes' : 'Created from Leaves'
                         }
@@ -3017,9 +2998,8 @@ class hr_holidays(osv.osv):
         res = super(hr_holidays, self).holidays_refuse(cr, uid, ids, context)
         for case in self.browse(cr, uid, ids):
             if case.date_from:
-                cr.execute("select id from hr_emp_timesheet where '" + case.date_from +"'::date between period_start_dt and period_end_dt and employee_id = "+ str(case.employee_id and case.employee_id.id or 0))
-                sheet_ids = [x[0] for x in cr.fetchall()]
-                cr.execute("select id from hr_punch where punch_date ='" + case.date_from + "'::date and timesheet_id in %s",(tuple(sheet_ids),))
+                
+                cr.execute("select id from hr_punch where punch_date ='" + case.date_from + "'::date and type ='daily' and employee_id = "+str(case.employee_id.id))
                 punch_ids = [x[0] for x in cr.fetchall()]
                 punch_obj.unlink(cr, uid, punch_ids, context)
         return res
@@ -3186,7 +3166,7 @@ class hr_audit(osv.osv):
                 'original_value' : fields.char('Original Value'),
                 'new_value'      : fields.char('New Value'),
                 'punch_date'     : fields.date('Punch Date'),
-                'timesheet_id'   : fields.many2one('hr.emp.timesheet','Time Sheet'),
+                #'timesheet_id'   : fields.many2one('hr.emp.timesheet','Time Sheet'),
                 'employee_id'    : fields.many2one('hr.employee', 'Employee')
                 }
 hr_audit()
