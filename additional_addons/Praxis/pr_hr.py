@@ -1774,13 +1774,15 @@ class hr_punch(osv.osv):
         return {'value' : res, 'warning' : warning }
     
     def create_audit(self, cr, uid, ids, vals, context=None):
-        context = dict(context or {})
+        """ creating the audit record based on the operations performed """
         
+        
+        context = dict(context or {})
         audit_vals = {}
         audit_obj = self.pool.get('hr.audit')
         today = datetime.now()
         
-        zone = self.pool.get('res.users').browse(cr,uid,uid).tz or 'Asia/Kolkata'
+        zone = self.pool.get('res.users').browse(cr, uid, uid).tz or 'Asia/Kolkata'
         local_tz = pytz.timezone(zone)
         
         if ids:
@@ -1792,7 +1794,7 @@ class hr_punch(osv.osv):
                 old_units = 0.0
                 new_units = 0.0
                 audit_vals.update({
-                               'punch_date' : vals.get('punch_date',case.punch_date),
+                               'punch_date' : vals.get('punch_date', case.punch_date),
                                'user_id'    : uid,
                                'event_type' : context.get('event_type'),
                                'employee_id' : case.employee_id.id,
@@ -1800,8 +1802,12 @@ class hr_punch(osv.osv):
                                        
                                        })
                 
-                if context.get('event_type')=='delete':
-                    audit_obj.create(cr, uid, audit_vals)
+                if context.get('event_type') == 'delete':
+                    vals.update({
+                                 'start_time' : case.start_time,
+                                 'end_time'   : case.end_time,
+                                 'units'      : case.units
+                                 })
                     
                 
                 if 'start_time' in vals:
@@ -1816,19 +1822,18 @@ class hr_punch(osv.osv):
                         new_start_date = new_start_date.replace(tzinfo=pytz.utc).astimezone(local_tz)
                         new_start_date = new_start_date.strftime('%I:%M %p')
                     
-                    if old_start_date != new_start_date :
                             
                                 
-                        audit_vals.update({
-                                           'original_value':old_start_date,
-                                           'new_value' : new_start_date,
-                                           'column_name' : 'Start Time',
-                                           })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
-                                                   ,('original_value','=',old_start_date),('new_value','=',new_start_date), ('column_name','=','Start Time')
-                                                   ,('employee_id','=',case.employee_id.id)])
-                        if not audit_ids:
-                            audit_obj.create(cr, uid, audit_vals)
+                    audit_vals.update({
+                                       'original_value':old_start_date if old_start_date != new_start_date else '',
+                                       'new_value' : new_start_date,
+                                       'column_name' : 'Start Time',
+                                       })
+                    audit_ids = audit_obj.search(cr, uid, [('punch_date', '=', vals.get('punch_date'))
+                                               , ('original_value', '=', old_start_date), ('new_value', '=', new_start_date), ('column_name', '=', 'Start Time')
+                                               , ('employee_id', '=', case.employee_id.id)])
+                    if not audit_ids:
+                        audit_obj.create(cr, uid, audit_vals)
                 
                 if 'end_time' in vals: 
                     
@@ -1843,40 +1848,38 @@ class hr_punch(osv.osv):
                         new_end_date = new_end_date.strftime('%I:%M %p')
                     
                    
-                    if old_end_date != new_end_date :
-                        audit_vals.update({
-                                           'original_value':old_end_date,
-                                           'new_value' : new_end_date,
-                                           'column_name' : 'End Time',
-                                           
-                                           })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
-                                                   ,('original_value','=',old_end_date),('new_value','=',new_end_date), ('column_name','=','End Time')
-                                                   ,('employee_id','=',case.employee_id.id)])
-                        if not audit_ids:
-                            audit_obj.create(cr, uid, audit_vals)
+                    audit_vals.update({
+                                       'original_value':old_end_date if old_end_date != new_end_date else '',
+                                       'new_value' : new_end_date,
+                                       'column_name' : 'End Time',
+                                       
+                                       })
+                    audit_ids = audit_obj.search(cr, uid, [('punch_date', '=', vals.get('punch_date'))
+                                               , ('original_value', '=', old_end_date), ('new_value', '=', new_end_date), ('column_name', '=', 'End Time')
+                                               , ('employee_id', '=', case.employee_id.id)])
+                    if not audit_ids:
+                        audit_obj.create(cr, uid, audit_vals)
                     
                 if 'units' in vals:
                     
                     if case.units:
-                        old_units = round(case.units,2)
+                        old_units = round(case.units, 2)
                     
                     if 'units' in vals :
-                        new_units = round(vals.get('units'),2)
+                        new_units = round(vals.get('units'), 2)
                     
-                    if old_units != new_units:
                         
-                        audit_vals.update({
-                                       'original_value':old_units or 0.00,
-                                       'new_value' : new_units,
-                                       'column_name' : 'Units',
-                                       
-                                       })
-                        audit_ids = audit_obj.search(cr, uid, [('punch_date','=', vals.get('punch_date'))
-                                                   ,('original_value','=',old_units),('new_value','=',new_units), ('column_name','=','Units')
-                                                   ,('employee_id','=',case.employee_id.id)])
-                        if not audit_ids:
-                            audit_obj.create(cr, uid, audit_vals)
+                    audit_vals.update({
+                                   'original_value':old_units if old_units != new_units else 0.00,
+                                   'new_value' : new_units,
+                                   'column_name' : 'Units',
+                                   
+                                   })
+                    audit_ids = audit_obj.search(cr, uid, [('punch_date', '=', vals.get('punch_date'))
+                                               , ('original_value', '=', old_units), ('new_value', '=', new_units), ('column_name', '=', 'Units')
+                                               , ('employee_id', '=', case.employee_id.id)])
+                    if not audit_ids:
+                        audit_obj.create(cr, uid, audit_vals)
                    
                     
         return True

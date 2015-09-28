@@ -44,6 +44,23 @@ class pr_report_wiz(osv.osv_memory):
             result.append((m.name[:-1] + '_id'+ m.name[-1:], m.label))
         return result
     
+    def _get_default_report(self, cr, uid, fields, context=None):
+        result = {}
+        rep_obj = self.pool.get('ir.actions.report.xml')
+        report_ids = rep_obj.search(cr, uid, [('report_type','=','pentaho')])
+        if report_ids :
+            for r in rep_obj.browse(cr, uid, report_ids[0]):
+                return (r.name)
+        return result
+    
+    def _get_reports(self, cr, uid, context=None):
+        rep_obj = self.pool.get('ir.actions.report.xml')
+        result = []
+        report_ids = rep_obj.search(cr, uid, [('report_type','=','pentaho')])
+        for r in rep_obj.browse(cr, uid, report_ids):
+            result.append((r.name, r.name))
+        return result
+    
     def _get_default_class(self, cr, uid, fields, context=None):
         result = {}
         mapping_obj = self.pool.get('hr.class.mapping')
@@ -76,16 +93,33 @@ class pr_report_wiz(osv.osv_memory):
                 'pay_period'       : fields.selection([('current','Current Pay Period'),('next','Next Pay Period'),('range','Date Range')],'Pay Period'),
                 'start_date'       : fields.date('From'),
                 'end_date'         : fields.date('To'),
+                'report_name'      : fields.text('Report Name'),
                 'report_id'        : fields.many2one('ir.actions.report.xml','Report'),
                 'emp_sort'         : fields.selection([('identification_id','Employee Number'),('name_related','Employee Name')],'Sort By'),
                 'emp_group_by'     : fields.selection(_class_id_get, 'Group By'),
+                'report'          : fields.selection(_get_reports, 'Reports'),
                 }
     _defaults = {
                  'pay_period' : 'current',
                  'active'  : True,
                  'emp_sort' : 'name_related',
                  'emp_group_by' : _get_default_class,
+                 'report' : _get_default_report
                  }
+    
+#     def default_get(self, cr, uid, fields, context=None):
+#         """ to update the default report """
+#         values = []
+#         res = super(pr_report_wiz, self).default_get(cr, uid, fields, context=context)
+#         rep_obj = self.pool.get('ir.actions.report.xml')
+#         report_ids = rep_obj.search(cr, uid, [('report_type','=','pentaho')])
+#         for r in report_ids:
+#             values.append((0,0,{'report_id':r}))
+#         if values:
+#             res.update({
+#                         'report_ids' : values 
+#                         })
+#         return res
     
     
     def fields_view_get(self, cr, uid, view_id=None, view_type=False, context=None, toolbar=False, submenu=False):
@@ -129,7 +163,7 @@ class pr_report_wiz(osv.osv_memory):
             
            
             
-            report_name = case.report_id.name
+            report_name = case.report
             data['model'] = context.get('hr.employee', 'ir.ui.menu')
             condition = []
             
@@ -389,3 +423,26 @@ class pr_report_wiz(osv.osv_memory):
     
     
 pr_report_wiz()
+
+# class custom_reports(osv.osv_memory):
+#     _name = 'custom.reports'
+#     _columns = {
+#                 'report_id'        : fields.many2one('ir.actions.report.xml','Report'),
+#                 'wiz_id'           : fields.many2one('pr.report.wiz','Wizard'),
+#                 }
+#     
+#     def get_report(self, cr, uid, ids, context=None):
+#         print "insidde the get_report"
+#         wiz_obj = self.pool.get('pr.report.wiz')
+#         for case in self.browse(cr, uid, ids):
+#             print "wiz_id",case.wiz_id.id, case.report_id.name
+#             wiz_obj.write(cr, uid, [case.wiz_id.id], {'report_name':case.report_id.name,'report_id':case.report_id.id})
+#         return True
+#     
+# custom_reports()
+
+
+
+
+
+

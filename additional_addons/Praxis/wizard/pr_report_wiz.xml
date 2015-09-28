@@ -10,6 +10,12 @@
                 <form string="Report Criteria">
                     <sheet>
                         <notebook>
+                            <page string="Reports">
+                                <group col="4" colspan="2">
+                                    <field name="report" widget="radio" required="1"/>
+                                </group>
+                            </page>
+                            
                             <page string="Standard Criteria">
                                 <group>
                                     <group>
@@ -58,7 +64,6 @@
                     <footer>
                       
                         <group class="oe_left oe_form" col="4" colspan="2"> 
-                            <field name="report_id" required="1" domain="[('report_type','=','pentaho')]" options='{"no_open": True, "no_create": True}'/>
                             <button name="print_report" string="View Report" type="object" class="oe_highlight"/>
                         </group>
                         
